@@ -25,6 +25,12 @@ val excredef: IL.excdef
 
 val entrytypescheme: string -> IL.typescheme
 
+(* All type definitions that should be included in generated implementation
+   Include [TokenType.tokentypedef] and type for non-terminals and semantic
+   values, if requested by user. *)
+
+val typedefs: IL.typedef list
+
 (* This writes the interface of the generated parser to the [.mli]
    file. *)
 

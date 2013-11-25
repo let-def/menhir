@@ -775,7 +775,7 @@ let program = {
     [ excdef ];
 
   typedefs =
-    tokentypedef @
+    Interface.typedefs @
     [ tokendef1 ];
 
   nonrecvaldefs =
