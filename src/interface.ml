@@ -17,124 +17,58 @@ open IL
 open CodeBits
 open TokenType
 
-(* This is the [Error] exception. *)
+include PreInterface
 
-let excname =
-  "Error"
+let interface = 
+  if Settings.typed_values then
+    let nonterminaltypedef =
+      let add_nt sym ocamltype datadefs =
+        { 
+          dataname = "NT'" ^ Misc.normalize sym;
+          datavalparams = [TypTextual ocamltype];
+          datatypeparams = None;
+        } :: datadefs
+      in
+      let datadefs =
+        StringMap.fold add_nt
+          Front.grammar.UnparameterizedSyntax.types
+          []
+      in
+      {
+        typename = "nonterminal";
+        typeparams = [];
+        typerhs = TDefSum datadefs;
+        typeconstraint = None;
+      }
+    in
+    let valuetypedef =
+      { 
+        typename = "sem_value";
+        typeparams = [];
+        typerhs = TDefSum [
+            {
+              dataname = "Terminal";
+              datavalparams = [TypTextual (Stretch.Inferred "token")];
+              datatypeparams = None;
+            };
+            {
+              dataname = "Nonterminal";
+              datavalparams = [TypTextual (Stretch.Inferred "nonterminal")];
+              datatypeparams = None;
+            }
+          ];
+        typeconstraint = None;
+      }
+    in
+    {
+      PreInterface.interface with
+    
+      typedecls = tokentypedef @
+                    [nonterminaltypedef; valuetypedef];
+    }
+  else
+    PreInterface.interface
 
-let excdef = {
-  excname = excname;
-  exceq = (if Settings.fixedexc then Some "Parsing.Parse_error" else None);
-}
-
-let excredef = {
-  excdef with exceq = Some excname
-}
-
-(* The type of the entry point for the start symbol [symbol]. *)
-
-let entrytypescheme symbol =
-  let ocamltype =
-    try
-      StringMap.find symbol PreFront.grammar.types
-    with Not_found ->
-      (* Every start symbol should have a type. *)
-      assert false
-  in
-  type2scheme (marrow [ arrow tlexbuf ttoken; tlexbuf ] (TypTextual ocamltype))
-
-let entryvaldecls =
-  StringSet.fold (fun symbol decls ->
-      (Misc.normalize symbol, entrytypescheme symbol) :: decls
-    ) PreFront.grammar.start_symbols []
-
-(* Type definitions of stepwise interface *)
-
-let steptypedef =
-  let tyenv = TypApp ("MenhirLib.EngineTypes.env", [
-      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp ("token",[]);
-    ])
-  in
-  [
-    { typename = "state"; typerhs = TDefSum [];
-      typeparams = []; typeconstraint = None; typeprivate = false };
-    { typename = "semantic_value";
-      typerhs = TAbbrev (TypApp ("Obj.t", []));
-      typeparams = []; typeconstraint = None; typeprivate = false };
-    { typename = "step"; typeprivate = true;
-      typerhs = TDefSum [
-          { dataname = "Step_run";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-          { dataname = "Step_error";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-          { dataname = "Step_action";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-        ];
-      typeparams = []; typeconstraint = None };
-    { typename = "outcome"; typeprivate = false;
-      typerhs = TDefSum [
-          { dataname = "Step";
-            datavalparams = [TypApp ("step",[])];
-            datatypeparams = None
-          };
-          { dataname = "Accept";
-            datavalparams = [TypApp ("semantic_value",[])];
-            datatypeparams = None
-          };
-          { dataname = "Reject";
-            datavalparams = [];
-            datatypeparams = None
-          };
-          { dataname = "Feed";
-            datavalparams = [TypArrow (TypTuple [
-                TypApp ("Lexing.position",[]);
-                TypApp ("token",[]);
-                TypApp ("Lexing.position",[]);
-              ], TypApp ("step",[]))];
-            datatypeparams = None
-          };
-        ];
-      typeparams = []; typeconstraint = None };
-  ]
-
-let stepvaldecls = [
-  "initial", { quantifiers = [];
-               body = TypArrow (TypApp ("state",[]), TypApp ("outcome",[])) };
-  "step", { quantifiers = [];
-            body = TypArrow (TypApp ("step",[]), TypApp ("outcome",[])) };
-]
-
-let stepentryvaldecls =
-  StringSet.fold (fun symbol decls ->
-      (Misc.normalize symbol ^ "_state",
-       {quantifiers = []; body = TypApp ("state",[])}) :: decls
-    ) PreFront.grammar.start_symbols []
-
-(* This is the interface of the generated parser. *)
-
-let interface = {
-
-  paramdecls =
-    PreFront.grammar.parameters;
-
-  excdecls =
-    [ excdef ];
-
-  typedecls =
-    tokentypedef @
-      (if Settings.stepwise then steptypedef else []);
-
-  valdecls =
-    entryvaldecls @
-      (if Settings.stepwise then stepvaldecls @ stepentryvaldecls else []);
-
-}
 
 (* Writing the interface to a file. *)
 
