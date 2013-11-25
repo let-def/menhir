@@ -400,6 +400,6 @@ let fixedexc =
 
 let typed_values =
   (if !typed_values then
-     if not infer then 
+     if not infer then
        failwith "--typed-values requires --infer flag.");
   !typed_values
