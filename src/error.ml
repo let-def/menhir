@@ -128,4 +128,13 @@ let grammar_warning positions message =
 
 let () =
   if Settings.stepwise && not Settings.table then
+<<<<<<< HEAD
     error [] "--stepwise requires --table backend"
+=======
+    error [] "--stepwise requires --table backend";
+  if Settings.typed_values && not Settings.infer then
+    error [] "--typed-values requires --infer flag.";
+  if Settings.feed_nonterminal && not Settings.typed_values then
+    error [] "--feed-nonterminal requires --typed-values (and --infer)."
+
+>>>>>>> 75778ec... Fix: use error module to print error messages

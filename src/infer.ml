@@ -267,7 +267,7 @@ let depend grammar =
 
   let output =
     IO.winvoke
-      [ moveml; movemli; write grammar; Interface.write ]
+      [ moveml; movemli; write grammar; PreInterface.write ]
       (Printf.sprintf "%s %s %s" Settings.ocamldep (Filename.quote mlname) (Filename.quote mliname))
       [ remove mlname; remove mliname; restoreml; restoremli ]
   in
