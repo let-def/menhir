@@ -181,3 +181,8 @@ val strict: bool
 
 val fixedexc: bool
 
+(* This flag causes menhir to generate a type for
+   nonterminals and semantic values, allowing to introspect the menhir
+   stack. Require --infer. *)
+
+val typed_values: bool
