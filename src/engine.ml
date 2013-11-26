@@ -30,6 +30,13 @@ module Make (T : TABLE) = struct
   let _eRR : exn =
     Error
 
+
+  (* --------------------------------------------------------------------------- *)
+
+  (* Alias to [EngineTypes.env] specialized to current definitions. *)
+
+  type env' = (state, semantic_value, token) env
+
   (* --------------------------------------------------------------------------- *)
 
   (* [discard] takes a token off the input stream, queries the lexer
@@ -37,22 +44,17 @@ module Make (T : TABLE) = struct
      previous token. If [env.shifted] has not yet reached its limit,
      it is incremented. *)
 
-  let discard env =
+  let discard env : env' =
     let lexbuf = env.lexbuf in
     let token = env.lexer lexbuf in
-    env.token <- token;
     Log.lookahead_token lexbuf (T.token2terminal token);
     let shifted = env.shifted + 1 in
-    if shifted >= 0 then
-      env.shifted <- shifted
-
-  (* --------------------------------------------------------------------------- *)
-
-  (* The type [void] is empty. Many of the functions below have return type
-     [void]. This guarantees that they never return a value. Instead, they
-     must stop by raising an exception: either [Accept] or [Error]. *)
-
-  type void
+    let shifted =
+      if shifted >= 0
+      then shifted
+      else env.shifted
+    in
+    { env with token; shifted }
 
   (* --------------------------------------------------------------------------- *)
 
@@ -79,7 +81,7 @@ module Make (T : TABLE) = struct
      Here, the code is structured in a slightly different way. It is up to
      the caller of [run] to indicate whether to discard a token. *)
 
-  let rec run env please_discard : void =
+  let rec run env please_discard : env' =
 
     (* Log the fact that we just entered this state. *)
     
@@ -91,8 +93,11 @@ module Make (T : TABLE) = struct
     (* This flag is set when [s] is being entered by shifting a terminal
        symbol and [s] does not have a default reduction on [#]. *)
 
-    if please_discard then
-      discard env;
+    let env =
+      if please_discard
+      then discard env
+      else env
+    in
 
     (* Examine what situation we are in. This case analysis is analogous to
        that performed in [CodeBackend.gettoken], in the sub-case where we do
@@ -104,7 +109,7 @@ module Make (T : TABLE) = struct
       continue (* there is none; continue below *)
       env
 
-  and continue env : void =
+  and continue env : env' =
 
     (* There is no default reduction. Consult the current lookahead token
        so as to determine which action should be taken. *)
@@ -130,7 +135,7 @@ module Make (T : TABLE) = struct
      a default reduction. We also know that the current lookahead token is
      not [error]: it is a real token, stored in [env.token]. *)
 
-  and action env : void =
+  and action env : env' =
 
     (* We consult the two-dimensional action table, indexed by the
        current state and the current lookahead token, in order to
@@ -157,34 +162,36 @@ module Make (T : TABLE) = struct
       (terminal : terminal)
       (value : semantic_value)
       (s' : state)
-      : void =
+      : env' =
 
     (* Log the transition. *)
 
     Log.shift terminal s';
 
-    (* Push a new cell onto the stack, containing the identity of the
-       state that we are leaving. *)
-
     let lexbuf = env.lexbuf in
-    env.stack <- {
-      state = env.current;
-      semv = value;
-      startp = lexbuf.Lexing.lex_start_p;
-      endp = lexbuf.Lexing.lex_curr_p;
-      next = env.stack;
-    };
 
-    (* Switch to state [s']. *)
-
-    env.current <- s';
+    let env =
+      { env with
+        (* Push a new cell onto the stack, containing the identity of the
+           state that we are leaving. *)
+        stack = {
+          state = env.current;
+          semv = value;
+          startp = lexbuf.Lexing.lex_start_p;
+          endp = lexbuf.Lexing.lex_curr_p;
+          next = env.stack;
+        };
+        (* Switch to state [s']. *)
+        current = s';
+      }
+    in
     run env please_discard
 
   (* --------------------------------------------------------------------------- *)
 
   (* This function takes care of reductions. *)
 
-  and reduce env (prod : production) : void =
+  and reduce env (prod : production) : env' =
 
     (* Log a reduction event. *)
 
@@ -232,12 +239,11 @@ module Make (T : TABLE) = struct
   (* [initiate] and [errorbookkeeping] initiate error handling. See the functions
      by the same names in [CodeBackend]. *)
 
-  and initiate env : void =
+  and initiate env : env' =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
       Log.discarding_last_token (T.token2terminal env.token);
-      discard env;
-      env.shifted <- 0;
+      let env = { (discard env) with shifted = 0 } in
       action env
     end
     else
@@ -245,13 +251,12 @@ module Make (T : TABLE) = struct
 
   and errorbookkeeping env =
     Log.initiating_error_handling();
-    env.previouserror <- env.shifted;
-    env.shifted <- (-1);
+    let env = { env with previouserror = env.shifted; shifted = -1 } in
     error env
 
   (* [error] handles errors. *)
 
-  and error env : void =
+  and error env : env' =
 
     (* Consult the column associated with the [error] pseudo-token in the
        action table. *)
@@ -356,7 +361,7 @@ module Make (T : TABLE) = struct
       (* If ocaml offered a [match/with] construct with zero branches, this is
 	 what we would use here, since the type [void] has zero cases. *)
 
-      let (_ : void) = run env false in
+      let (_ : env') = run env false in
       assert false (* cannot fail *)
 
     with
