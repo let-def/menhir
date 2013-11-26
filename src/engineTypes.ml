@@ -246,7 +246,7 @@ module type TABLE = sig
   exception Error
 
   type semantic_action =
-      (state, semantic_value, token) env -> unit
+      (state, semantic_value, token) env -> (state, semantic_value) stack
 
   val semantic_action: production -> semantic_action
 

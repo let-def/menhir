@@ -219,16 +219,13 @@ let reducebody prod =
           extrabindings fpreviouserror action @ (* add bindings for the weird keywords *)
           [ PVar semv, act ],                   (* run the user's code and bind [semv] *)
 
-          ERecordWrite (
-            EVar env, fstack,                   (* update the stack with ... *)
-            ERecord [                           (* ... a new stack cell *)
-              fstate, EVar state;               (* the current state after popping; it will be updated by [goto] *)
-              fsemv, ERepr (EVar semv);         (* the newly computed semantic value *)
-              fstartp, EVar startp;             (* the newly computed start and end positions *)
-              fendp, EVar endp;
-              fnext, EVar stack;                (* this is the stack after popping *)
-            ]
-          )
+          ERecord [                           (* new stack cell returned to the interpreter loop *)
+            fstate, EVar state;               (* the current state after popping; it will be updated by [goto] *)
+            fsemv, ERepr (EVar semv);         (* the newly computed semantic value *)
+            fstartp, EVar startp;             (* the newly computed start and end positions *)
+            fendp, EVar endp;
+            fnext, EVar stack;                (* this is the stack after popping *)
+          ]
 
         )
       )
