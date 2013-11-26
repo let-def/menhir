@@ -203,7 +203,7 @@ module Make (T : TABLE) = struct
 
     if (
       try
-	T.semantic_action prod env;
+	env.stack <- T.semantic_action prod env;
 	true
       with Error ->
 	false

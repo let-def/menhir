@@ -97,7 +97,7 @@ module T = struct
   exception Error
 
   type semantic_action =
-      (state, semantic_value, token) env -> unit
+      (state, semantic_value, token) env -> (state, semantic_value) stack
 
   let semantic_action (prod : production) : semantic_action =
     fun env ->
@@ -170,7 +170,7 @@ module T = struct
 	  (* Construct and push a new stack cell. The associated semantic
 	     value is a new concrete syntax tree. *)
 
-	  env.stack <- {
+	  {
 	    state = env.current;
 	    semv = CstNonTerminal (prod, values);
 	    startp = !startp;
