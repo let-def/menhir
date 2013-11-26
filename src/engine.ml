@@ -30,12 +30,21 @@ module Make (T : TABLE) = struct
   let _eRR : exn =
     Error
 
-
   (* --------------------------------------------------------------------------- *)
 
   (* Alias to [EngineTypes.env] specialized to current definitions. *)
 
   type env' = (state, semantic_value, token) env
+
+  type step =
+    | Step_run    of env' * bool (* please_discard flag *)
+    | Step_error  of env'
+    | Step_action of env'
+
+  type parser =
+    | Step   of step
+    | Accept of semantic_value
+    | Reject
 
   (* --------------------------------------------------------------------------- *)
 
@@ -81,7 +90,7 @@ module Make (T : TABLE) = struct
      Here, the code is structured in a slightly different way. It is up to
      the caller of [run] to indicate whether to discard a token. *)
 
-  let rec run env please_discard : env' =
+  let rec run env please_discard : parser =
 
     (* Log the fact that we just entered this state. *)
 
@@ -109,7 +118,7 @@ module Make (T : TABLE) = struct
       continue (* there is none; continue below *)
       env
 
-  and continue env : env' =
+  and continue env : parser =
 
     (* There is no default reduction. Consult the current lookahead token
        so as to determine which action should be taken. *)
@@ -124,7 +133,7 @@ module Make (T : TABLE) = struct
 
     if env.shifted = (-1) then begin
       Log.resuming_error_handling();
-      error env
+      Step (Step_error env)
     end
     else
       action env
@@ -135,7 +144,7 @@ module Make (T : TABLE) = struct
      a default reduction. We also know that the current lookahead token is
      not [error]: it is a real token, stored in [env.token]. *)
 
-  and action env : env' =
+  and action env : parser =
 
     (* We consult the two-dimensional action table, indexed by the
        current state and the current lookahead token, in order to
@@ -162,7 +171,7 @@ module Make (T : TABLE) = struct
       (terminal : terminal)
       (value : semantic_value)
       (s' : state)
-      : env' =
+      : parser =
 
     (* Log the transition. *)
 
@@ -185,13 +194,13 @@ module Make (T : TABLE) = struct
         current = s';
       }
     in
-    run env please_discard
+    Step (Step_run (env,please_discard))
 
   (* --------------------------------------------------------------------------- *)
 
   (* This function takes care of reductions. *)
 
-  and reduce env (prod : production) : env' =
+  and reduce env (prod : production) : parser =
 
     (* Log a reduction event. *)
 
@@ -223,7 +232,7 @@ module Make (T : TABLE) = struct
          production [prod]. *)
 
       let current = T.goto env.stack.state prod in
-      run { env with current } false
+      Step (Step_run ({ env with current }, false))
 
     end
     else
@@ -237,12 +246,12 @@ module Make (T : TABLE) = struct
   (* [initiate] and [errorbookkeeping] initiate error handling. See the functions
      by the same names in [CodeBackend]. *)
 
-  and initiate env : env' =
+  and initiate env : parser =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
       Log.discarding_last_token (T.token2terminal env.token);
       let env = { (discard env) with shifted = 0 } in
-      action env
+      Step (Step_action env)
     end
     else
       errorbookkeeping env
@@ -250,11 +259,11 @@ module Make (T : TABLE) = struct
   and errorbookkeeping env =
     Log.initiating_error_handling();
     let env = { env with previouserror = env.shifted; shifted = -1 } in
-    error env
+    Step (Step_error env)
 
   (* [error] handles errors. *)
 
-  and error env : env' =
+  and error env : parser =
 
     (* Consult the column associated with the [error] pseudo-token in the
        action table. *)
@@ -297,7 +306,7 @@ module Make (T : TABLE) = struct
 
       (* The stack is empty. Die. *)
 
-      raise _eRR
+      Reject
 
     else begin
 
@@ -308,6 +317,13 @@ module Make (T : TABLE) = struct
       error env
 
     end
+
+  (* --------------------------------------------------------------------------- *)
+
+  let step = function
+    | Step_run (env,please_discard) -> run env please_discard
+    | Step_action env -> action env
+    | Step_error  env -> error env
 
   (* --------------------------------------------------------------------------- *)
 
@@ -358,11 +374,15 @@ module Make (T : TABLE) = struct
       (* If ocaml offered a [match/with] construct with zero branches, this is
          what we would use here, since the type [void] has zero cases. *)
 
-      let (_ : env') = run env false in
-      assert false (* cannot fail *)
+      let rec aux = function
+        | Step s -> aux (step s)
+        | Accept v -> v
+        | Reject -> raise _eRR
+      in
+      aux (Step (Step_run (env, false)))
 
     with
-    | Accept v ->
+    | T.Accept v ->
         v
 
 end
