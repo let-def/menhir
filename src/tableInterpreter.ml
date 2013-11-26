@@ -144,13 +144,13 @@ module Make (T : TableFormat.TABLES)
       | None ->
 	  ()
     
-    let lookahead_token lexbuf token =
+    let lookahead_token start_p token curr_p =
       match T.trace with
       | Some (terminals, _) ->
           fprintf stderr "Lookahead token is now %s (%d-%d)\n%!"
             terminals.(token)
-            lexbuf.Lexing.lex_start_p.Lexing.pos_cnum
-            lexbuf.Lexing.lex_curr_p.Lexing.pos_cnum
+            start_p.Lexing.pos_cnum
+            curr_p.Lexing.pos_cnum
       | None ->
 	  ()
     

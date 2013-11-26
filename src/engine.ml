@@ -16,6 +16,10 @@ open EngineTypes
 
 (* The LR parsing engine. *)
 
+let fst3 (a,_,_) = a
+let snd3 (_,a,_) = a
+let thd3 (_,_,a) = a
+
 (* This module is used:
 
    - at compile time, if so requested by the user, via the --interpret options;
@@ -37,7 +41,7 @@ module Make (T : TABLE) = struct
   type env' = (state, semantic_value, token) env
 
   type step =
-    | Step_run    of env' * bool (* please_discard flag *)
+    | Step_run    of env'
     | Step_error  of env'
     | Step_action of env'
 
@@ -45,6 +49,7 @@ module Make (T : TABLE) = struct
     | Step   of step
     | Accept of semantic_value
     | Reject
+    | Feed   of (Lexing.position * token * Lexing.position -> step)
 
   (* --------------------------------------------------------------------------- *)
 
@@ -53,10 +58,11 @@ module Make (T : TABLE) = struct
      previous token. If [env.shifted] has not yet reached its limit,
      it is incremented. *)
 
-  let discard env : env' =
-    let lexbuf = env.lexbuf in
-    let token = env.lexer lexbuf in
-    Log.lookahead_token lexbuf (T.token2terminal token);
+  let discard env token : env' =
+    Log.lookahead_token 
+      (fst3 token)
+      (T.token2terminal (snd3 token))
+      (thd3 token);
     let shifted = env.shifted + 1 in
     let shifted =
       if shifted >= 0
@@ -90,23 +96,12 @@ module Make (T : TABLE) = struct
      Here, the code is structured in a slightly different way. It is up to
      the caller of [run] to indicate whether to discard a token. *)
 
-  let rec run env please_discard : outcome =
+  let rec run env : outcome =
 
     (* Log the fact that we just entered this state. *)
     
     let s = env.current in
     Log.state s;
-
-    (* If [please_discard] is set, discard a token and fetch the next one. *)
-
-    (* This flag is set when [s] is being entered by shifting a terminal
-       symbol and [s] does not have a default reduction on [#]. *)
-
-    let env =
-      if please_discard
-      then discard env
-      else env
-    in
 
     (* Examine what situation we are in. This case analysis is analogous to
        that performed in [CodeBackend.gettoken], in the sub-case where we do
@@ -150,7 +145,7 @@ module Make (T : TABLE) = struct
        current state and the current lookahead token, in order to
        determine which action should be taken. *)
 
-    let token = env.token in
+    let token = snd3 env.token in
     T.action
       env.current                    (* determines a row *)
       (T.token2terminal token)       (* determines a column *)
@@ -177,24 +172,25 @@ module Make (T : TABLE) = struct
 
     Log.shift terminal s';
 
-    let lexbuf = env.lexbuf in
-
     let env =
+      let startp, _, endp = env.token in
       { env with
         (* Push a new cell onto the stack, containing the identity of the
            state that we are leaving. *)
         stack = {
           state = env.current;
           semv = value;
-          startp = lexbuf.Lexing.lex_start_p;
-          endp = lexbuf.Lexing.lex_curr_p;
+          startp;
+          endp;
           next = env.stack;
         };
         (* Switch to state [s']. *)
         current = s';
       }
     in
-    Step (Step_run (env,please_discard))
+    if please_discard
+    then Feed (fun token -> Step_run (discard env token))
+    else Step (Step_run env)
 
   (* --------------------------------------------------------------------------- *)
 
@@ -232,7 +228,7 @@ module Make (T : TABLE) = struct
 	 production [prod]. *)
 
       let current = T.goto env.stack.state prod in
-      Step (Step_run ({ env with current }, false))
+      Step (Step_run { env with current })
 
     end
     else
@@ -249,9 +245,8 @@ module Make (T : TABLE) = struct
   and initiate env : outcome =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
-      Log.discarding_last_token (T.token2terminal env.token);
-      let env = { (discard env) with shifted = 0 } in
-      Step (Step_action env)
+      Log.discarding_last_token (T.token2terminal (snd3 env.token));
+      Feed (fun token -> Step_action { (discard env token) with shifted = 0 })
     end
     else
       errorbookkeeping env
@@ -321,7 +316,7 @@ module Make (T : TABLE) = struct
   (* --------------------------------------------------------------------------- *)
 
   let step = function
-    | Step_run (env,please_discard) -> run env please_discard
+    | Step_run    env -> run env
     | Step_action env -> action env
     | Step_error  env -> error env
 
@@ -350,16 +345,16 @@ module Make (T : TABLE) = struct
       lexer lexbuf
     in
 
+    let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
+
     (* Log our first lookahead token. *)
 
-    Log.lookahead_token lexbuf (T.token2terminal token);
+    Log.lookahead_token lex_start_p (T.token2terminal token) lex_curr_p;
 
     (* Build an initial environment. *)
 
     let env = {
-      lexer = lexer;
-      lexbuf = lexbuf;
-      token = token;
+      token = (lex_start_p, token, lex_curr_p);
       shifted = max_int;
       previouserror = max_int;
       stack = empty;
@@ -378,8 +373,12 @@ module Make (T : TABLE) = struct
 	| Step s -> aux (step s)
 	| Accept v -> v
 	| Reject -> raise _eRR
+	| Feed f -> 
+	  let token = lexer lexbuf in
+	  let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
+	  aux (step (f (lex_start_p, token, lex_curr_p)))
       in
-      aux (Step (Step_run (env, false)))
+      aux (run env)
 
     with
     | T.Accept v ->
