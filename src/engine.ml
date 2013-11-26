@@ -208,13 +208,11 @@ module Make (T : TABLE) = struct
     (* The apparently weird idiom used here is an encoding for a
        [let/unless] construct, which does not exist in ocaml. *)
 
-    if (
-      try
-	env.stack <- T.semantic_action prod env;
-	true
-      with Error ->
-	false
-    ) then begin
+    let env, success =
+      try { env with stack = T.semantic_action prod env }, true
+      with Error -> env, false
+    in
+    if success then begin
 
       (* By our convention, the semantic action is responsible for updating
 	 the stack. The state now found in the top stack cell is the return
@@ -224,8 +222,8 @@ module Make (T : TABLE) = struct
 	 by consulting the goto table at the return state and at
 	 production [prod]. *)
 
-      env.current <- T.goto env.stack.state prod;
-      run env false
+      let current = T.goto env.stack.state prod in
+      run { env with current } false
 
     end
     else
@@ -306,8 +304,7 @@ module Make (T : TABLE) = struct
       (* The stack is nonempty. Pop a cell, updating the current state
 	 with that found in the popped cell, and try again. *)
 
-      env.stack <- next;
-      env.current <- cell.state;
+      let env = { env with stack = next; current = cell.state } in
       error env
 
     end
