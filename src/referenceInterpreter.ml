@@ -217,12 +217,12 @@ module T = struct
             fprintf stderr "Reducing production %s" (Production.print prod)
       )
 
-    let lookahead_token lexbuf tok =
+    let lookahead_token start_p tok curr_p =
       maybe (fun () ->
         fprintf stderr "Lookahead token is now %s (%d-%d)"
           (Terminal.print tok)
-          lexbuf.Lexing.lex_start_p.Lexing.pos_cnum
-          lexbuf.Lexing.lex_curr_p.Lexing.pos_cnum
+          start_p.Lexing.pos_cnum
+          curr_p.Lexing.pos_cnum
       )
 
     let initiating_error_handling () =

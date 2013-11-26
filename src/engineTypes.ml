@@ -62,18 +62,11 @@ type ('state, 'semantic_value) stack = {
 
 type ('state, 'semantic_value, 'token) env = {
 
-  (* The lexer. *)
 
-  lexer: Lexing.lexbuf -> 'token;
+  (* The last token that was obtained from the lexer, with its starting and
+     ending positions. *)
 
-  (* The lexing buffer. It is used as an argument to the lexer, and also
-     accessed directly when extracting positions. *)
-
-  lexbuf: Lexing.lexbuf;
-
-  (* The last token that was obtained from the lexer. *)
-
-  token: 'token;
+  token: Lexing.position * 'token * Lexing.position;
 
   (* A count of how many tokens were shifted since the beginning, or since
      the last [error] token was encountered. By convention, if [shifted]
@@ -282,7 +275,7 @@ module type TABLE = sig
 
     (* Lookahead token is now <terminal> (<pos>-<pos>) *)
 
-    val lookahead_token: Lexing.lexbuf -> terminal -> unit
+    val lookahead_token: Lexing.position -> terminal -> Lexing.position -> unit
 
     (* Initiating error handling *)
 
