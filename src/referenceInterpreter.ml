@@ -145,7 +145,7 @@ module T = struct
 
               values.(k - 1) <- stack.semv;
 
-              (* Pop one cell. The stack must be non-empty. As we pop a cell,
+              (* Pop one cell. The stack mu        st be non-empty. As we pop a cell,
                  change the automaton's current state to the one stored within
                  the cell. (It is sufficient to do this only when [k] is 1.)
                  If this is the first (last) cell that we pop, update [endp]
@@ -157,8 +157,7 @@ module T = struct
                 endp := stack.endp
               end;
               if k = 1 then begin
-                env.current <- stack.state;
-                startp := stack.startp
+                  startp := stack.startp;
               end;
               pop (k - 1) next
 
@@ -171,7 +170,7 @@ module T = struct
              value is a new concrete syntax tree. *)
 
           {
-            state = env.current;
+            state = stack.state;
             semv = CstNonTerminal (prod, values);
             startp = !startp;
             endp = !endp;

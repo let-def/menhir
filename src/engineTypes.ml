@@ -73,29 +73,29 @@ type ('state, 'semantic_value, 'token) env = {
 
   (* The last token that was obtained from the lexer. *)
 
-  mutable token: 'token;
+  token: 'token;
 
   (* A count of how many tokens were shifted since the beginning, or since
      the last [error] token was encountered. By convention, if [shifted]
      is (-1), then the current lookahead token is [error]. *)
 
-  mutable shifted: int;
+  shifted: int;
 
   (* A copy of the value of [shifted] just before the most recent error
      was detected. This value is not used by the automaton itself, but
      is made accessible to semantic actions. *)
 
-  mutable previouserror: int;
+  previouserror: int;
 
   (* The stack. In [CodeBackend], it is passed around on its own,
      whereas, here, it is accessed via the environment. *)
 
-  mutable stack: ('state, 'semantic_value) stack;
+  stack: ('state, 'semantic_value) stack;
 
   (* The current state. In [CodeBackend], it is passed around on its
      own, whereas, here, it is accessed via the environment. *)
 
-  mutable current: 'state;
+  current: 'state;
 
 }
 
