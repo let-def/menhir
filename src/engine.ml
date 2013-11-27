@@ -384,5 +384,43 @@ module Make (T : TABLE) = struct
     | T.Accept v ->
         v
 
+  (* --------------------------------------------------------------------------- *)
+
+  (* Step-by-step execution interface *)
+
+  let initial s =
+    let rec empty = {
+      state = s;                 (* dummy *)
+      semv = T.error_value;      (* dummy *)
+      startp = Lexing.dummy_pos; (* dummy *)
+      endp = Lexing.dummy_pos;   (* dummy *)
+      next = empty;
+    } in
+
+    let feed (start_p,t,curr_p as token) =
+      (* Log our first lookahead token. *)
+
+      Log.lookahead_token start_p (T.token2terminal t) curr_p;
+
+      (* Build an initial environment. *)
+
+      let env = {
+        token = token;
+        shifted = max_int;
+        previouserror = max_int;
+        stack = empty;
+        current = s;
+      } in
+
+      Step_run env
+
+    in
+    Feed feed
+
+  let step s =
+    try step s
+    with T.Accept v -> Accept v
+       | Error      -> Reject
+
 end
 
