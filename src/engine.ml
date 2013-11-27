@@ -330,6 +330,31 @@ module Make (T : TABLE) = struct
     | `Feed_error ->
       { env = { (discard s.env token) with shifted = 0 }; tag = `Step_action }
 
+  let initial s (start_p,t,curr_p as token) =
+    let rec empty = {
+      state = s;                 (* dummy *)
+      semv = T.error_value;      (* dummy *)
+      startp = Lexing.dummy_pos; (* dummy *)
+      endp = Lexing.dummy_pos;   (* dummy *)
+      next = empty;
+    } in
+
+    (* Log our first lookahead token. *)
+
+    Log.lookahead_token start_p (T.token2terminal t) curr_p;
+
+    (* Build an initial environment. *)
+
+    let env = {
+      token = token;
+      shifted = max_int;
+      previouserror = max_int;
+      stack = empty;
+      current = s;
+    } in
+
+    { env; tag = `Step_run }
+
   (* --------------------------------------------------------------------------- *)
 
   let entry
@@ -390,9 +415,9 @@ module Make (T : TABLE) = struct
       in
       aux (run env)
 
-    with
-    | T.Accept v ->
-        v
+    with T.Accept v -> v
+
+  (* --------------------------------------------------------------------------- *)
 
 end
 

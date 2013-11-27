@@ -321,4 +321,23 @@ module type ENGINE = sig
     Lexing.lexbuf ->
     semantic_value
 
+  (* Step-by-step execution interface *)
+
+  type step = [ `Step_run | `Step_error | `Step_action ]
+  type feed = [ `Feed | `Feed_error ]
+
+  type 'a parser = { env: (state, semantic_value, token) env; tag : 'a }
+
+  type result =
+    [ `Step   of step parser
+    | `Feed   of feed parser
+    | `Accept of semantic_value
+    | `Reject ]
+
+  val initial: state -> Lexing.position * token * Lexing.position -> step parser
+
+  val step: step parser -> result
+
+  val feed: feed parser -> Lexing.position * token * Lexing.position -> step parser
+
 end
