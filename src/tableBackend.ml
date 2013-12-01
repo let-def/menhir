@@ -259,7 +259,7 @@ let semantic_action prod =
 
       (* We do this mainly because [Invariant.prodstack] does not
 	 support productions that are never reduced. *)
-      
+
       EComment (
 	"a production never reduced",
 	EApp (EVar "assert", [ EData ("false", []) ])
@@ -732,7 +732,7 @@ let api : IL.valdef list =
       | None ->
 	  assert false (* every start symbol should carry a type *)
     in
-    
+
     define (
       Nonterminal.print true nt,
       EFun (
@@ -750,6 +750,10 @@ let api : IL.valdef list =
 	  type2scheme t
 	)
       )
+    ) ::
+    define (
+      (Nonterminal.print true nt) ^ "_state",
+      EIntConst (Lr1.number state)
     ) ::
     api
 
@@ -784,6 +788,10 @@ let program = {
     api;
 
   postlogue =
+    [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
+        \twith type token := token\n\
+        \tand type state = int\n\
+        \tand type semantic_value = MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
 
 }
