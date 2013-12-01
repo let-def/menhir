@@ -602,7 +602,8 @@ let statetypedef = {
 		       else defs
 		     ) []
                    );
-  typeconstraint = None
+  typeconstraint = None;
+  typeprivate =    false;
 }
 
 (* This is the type of parser environments. *)
@@ -657,7 +658,8 @@ let envtypedef = {
     insertif previouserror_required (field true fpreviouserror tint)
 
     );
-  typeconstraint = None
+  typeconstraint = None;
+  typeprivate = false;
 }
 
 (* [curry] curries the top stack cell in a type [t] of the form
