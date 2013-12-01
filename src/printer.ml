@@ -523,7 +523,7 @@ let datavalparams f = function
   | [] ->
       ()
   | valparam :: valparams ->
-      fprintf f " of %a%a" typ valparam (list typ times) valparams
+      fprintf f " of %a%a" typ1 valparam (list typ1 times) valparams
 
 let datatypeparams f = function
   | None ->
