@@ -751,6 +751,10 @@ let api : IL.valdef list =
         )
       )
     ) ::
+    define (
+      (Nonterminal.print true nt) ^ "_state",
+      EIntConst (Lr1.number state)
+    ) ::
     api
 
   ) Lr1.entry []
@@ -784,6 +788,10 @@ let program = {
     api;
 
   postlogue =
+    [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
+        \twith type token := token\n\
+        \tand type state = int\n\
+        \tand type semantic_value = MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
 
 }
