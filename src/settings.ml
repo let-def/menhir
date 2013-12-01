@@ -145,6 +145,9 @@ let interpret_show_cst =
 let table =
   ref false
 
+let stepwise =
+  ref false
+
 let coq =
   ref false
 
@@ -205,6 +208,7 @@ let options = Arg.align [
   "--only-tokens", Arg.Unit tokentypeonly, " Generate token type definition only, no code";
   "--raw-depend", Arg.Unit (fun () -> depend := OMRaw), " Invoke ocamldep and echo its raw output";
   "--stdlib", Arg.Set_string stdlib_path, "<directory> Specify where the standard library lies";
+  "--stepwise", Arg.Set stepwise, " Generate interface for step-by-step execution (for use with table-based back-end only)";
   "--strict", Arg.Set strict, " Warnings about the grammar are errors";
   "--suggest-comp-flags", Arg.Unit (fun () -> suggestion := SuggestCompFlags),
                           " Suggest compilation flags for ocaml{c,opt}";
@@ -368,6 +372,12 @@ let interpret_show_cst =
 
 let table =
   !table
+
+let stepwise =
+  if !stepwise then
+    if not table then
+      failwith "--stepwise requires --table backend";
+  !stepwise
 
 let coq =
   !coq

@@ -151,6 +151,11 @@ val interpret_show_cst : bool
 
 val table : bool
 
+(* If using the table backend, generated interface for step-by-step
+   execution.  *)
+
+val stepwise : bool
+
 (* Whether to generate a coq description of the grammar and automaton. *)
 
 val coq : bool
