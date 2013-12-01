@@ -299,29 +299,13 @@ end
 
 (* --------------------------------------------------------------------------- *)
 
-(* This signature describes the LR engine. *)
+(* Step-by-step execution interface *)
 
-module type ENGINE = sig
+module type STEP_ENGINE = sig
 
   type state
-
   type token
-
   type semantic_value
-
-  (* An entry point to the engine requires a start state, a lexer, and a lexing
-     buffer. It either succeeds and produces a semantic value, or fails and
-     raises [Error]. *)
-
-  exception Error
-
-  val entry:
-    state ->
-    (Lexing.lexbuf -> token) ->
-    Lexing.lexbuf ->
-    semantic_value
-
-  (* Step-by-step execution interface *)
 
   type step = private
     | Step_run    of (state, semantic_value, token) env
@@ -337,5 +321,32 @@ module type ENGINE = sig
   val initial: state -> outcome
 
   val step: step -> outcome
+
+end
+
+(* This signature describes the LR engine. *)
+
+module type ENGINE = sig
+
+  type state
+  type token
+  type semantic_value
+
+  (* An entry point to the engine requires a start state, a lexer, and a lexing
+     buffer. It either succeeds and produces a semantic value, or fails and
+     raises [Error]. *)
+
+  exception Error
+
+  val entry:
+    state ->
+    (Lexing.lexbuf -> token) ->
+    Lexing.lexbuf ->
+    semantic_value
+
+  include STEP_ENGINE
+    with type state := state
+     and type token := token
+     and type semantic_value := semantic_value
 
 end
