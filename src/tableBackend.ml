@@ -135,7 +135,7 @@ let reducecellcasts prod i symbol casts =
 	  assert false
     in
     begin
-      if Settings.typed_values
+      if not Settings.typed_values
       then
 	(* Cast: [let id = ((Obj.magic id) : t) in ...]. *)
 	(
@@ -772,21 +772,34 @@ let api : IL.valdef list =
 	  assert false (* every start symbol should carry a type *)
     in
 
+    let project v =
+      if Settings.typed_values
+      then
+	let kind, cstr =
+	  "Nonterminal", "NT'" ^ Misc.normalize (Nonterminal.print true nt)
+	in
+	EMatch (v, [
+	  { branchpat = PData (kind, [PData (cstr, [PVar "result"])]);
+	    branchbody = EVar "result"};
+	  { branchpat = PWildcard;
+	    branchbody = EApp (EVar "assert", [EVar "false"]) };
+	])
+      else
+	EAnnot (EMagic v, type2scheme t)
+    in
+
     define (
       Nonterminal.print true nt,
       EFun (
 	[ PVar lexer; PVar lexbuf ],
-	EAnnot (
-	  EMagic (
-	    EApp (
-	      EVar entry, [
-		EIntConst (Lr1.number state);
-		EVar lexer;
-		EVar lexbuf
-	      ]
-	    )
-	  ),
-	  type2scheme t
+	project (
+	  EApp (
+	    EVar entry, [
+	      EIntConst (Lr1.number state);
+	      EVar lexer;
+	      EVar lexbuf
+	    ]
+	  )
 	)
       )
     ) ::
