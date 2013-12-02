@@ -24,11 +24,11 @@ let excname =
 
 let excdef = {
   excname = excname;
-  exceq = (if Settings.fixedexc then Some "Parsing.Parse_error" else None);
+  excrhs = (if Settings.fixedexc then ExcRebind "Parsing.Parse_error" else ExcDecl []);
 }
 
 let excredef = {
-  excdef with exceq = Some excname
+  excdef with excrhs = ExcRebind excname
 }
 
 (* The type of the entry point for the start symbol [symbol]. *)
