@@ -25,8 +25,8 @@ val excredef: IL.excdef
 
 val entrytypescheme: string -> IL.typescheme
 
-(* Expose the interface at current point, to be extended after inference by
-   [Interface.write] *)
+(* Expose the interface at current point, parametrized over type of semantic
+   values to be extended after inference by [Interface.write] *)
 
 val interface: IL.interface
 

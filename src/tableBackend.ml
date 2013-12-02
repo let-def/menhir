@@ -37,7 +37,7 @@ let make =
   tableInterpreter ^ ".Make"
 
 let accept =
-  tableInterpreter ^ ".Accept"
+  "Accept"
 
 let engineTypes =
   menhirlib ^ ".EngineTypes"
@@ -700,6 +700,47 @@ let tokendef1 = {
   typeprivate = false;
 }
 
+let excaccept =
+  {
+    excname = "Accept";
+    excrhs = ExcDecl [
+        if Settings.typed_values then
+          TypApp ("semantic_value",[])
+        else
+          TypApp ("Obj.t",[])
+    ]
+  }
+
+let semtypealias =
+        if Settings.typed_values then
+   [ {
+     typename = "semantic_value'";
+     typeparams = [];
+     typerhs = TAbbrev (TypApp ("semantic_value", []));
+     typeconstraint = None;
+     typeprivate = false;
+   } ]
+  else []
+
+let semtypedef =
+  if Settings.typed_values
+  then [
+    {
+      typename = "semantic_value";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("semantic_value'", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+  else [
+    {
+      typename = "semantic_value";
+      typeparams = [];
+      typerhs = TAbbrev (TypApp ("Obj.t", []));
+      typeconstraint = None;
+      typeprivate = false;
+    } ]
+
 let tokendef2 = {
   typename = "token"; (* not [TokenType.tctoken], as it might carry an undesired prefix *)
   typeparams = [];
@@ -708,10 +749,14 @@ let tokendef2 = {
   typeprivate = false;
 }
 
+let error_value =
+  if Settings.typed_values
+  then EData ("Bottom",[])
+  else EApp (EVar "Obj.repr", [EUnit])
+
 (* Here is the application of [TableInterpreter.Make]. Note that the
    exception [Error], which is defined at toplevel, is re-defined
    within the functor argument: [exception Error = Error]. *)
-
 let application = {
 
   modulename =
@@ -722,14 +767,15 @@ let application = {
       MVar make,
       MStruct {
         struct_excdefs = [
-          excredef;
+          excaccept; excredef;
         ];
-        struct_typedefs = [
+        struct_typedefs = semtypedef @ [
           tokendef2;
         ];
         struct_nonrecvaldefs = [
           token2terminal;
           define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
+          define ("error_value", error_value);
           token2value;
           default_reduction;
           error;
@@ -827,7 +873,7 @@ let program = {
     [ excdef ];
 
   typedefs =
-    Interface.typedefs @
+    Interface.typedefs @ semtypealias @
     [ tokendef1 ];
 
   nonrecvaldefs =
@@ -843,7 +889,7 @@ let program = {
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
         \twith type token := token\n\
         \tand type state = int\n\
-        \tand type semantic_value = MenhirInterpreter.semantic_value)" ] @
+        \tand type semantic_value := MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
 
 }
