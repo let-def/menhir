@@ -18,8 +18,12 @@
 module type TABLES = sig
 
   (* This is the parser's type of tokens. *)
-    
+
   type token
+
+  (* This is the type of parser's semantic values. *)
+
+  type semantic_value
 
   (* This maps a token to its internal (generation-time) integer code. *)
 
@@ -29,9 +33,13 @@ module type TABLES = sig
 
   val error_terminal: int
 
+  (* Distinguished semantic_value tagging invalid stack frame *)
+
+  val error_value: semantic_value
+
   (* This maps a token to its semantic value. *)
 
-  val token2value: token -> Obj.t
+  val token2value: token -> semantic_value
 
   (* Traditionally, an LR automaton is described by two tables, namely, an
      action table and a goto table. See, for instance, the Dragon book.
@@ -111,9 +119,15 @@ module type TABLES = sig
   (* A one-dimensional semantic action table maps productions to semantic
      actions. The calling convention for semantic actions is described in
      [EngineTypes]. *)
-    
-  val semantic_action: ((int, Obj.t, token) EngineTypes.env -> 
-                        (int, Obj.t) EngineTypes.stack) array
+
+  val semantic_action: ((int, semantic_value, token) EngineTypes.env ->
+                        (int, semantic_value) EngineTypes.stack) array
+
+
+  (* The parser defines its own [Accept] exception. This exception is raised
+     and caught by the engine inside entry points to return a final result. *)
+
+  exception Accept of semantic_value
 
   (* The parser defines its own [Error] exception. This exception can be
      raised by semantic actions and caught by the engine, and raised by the

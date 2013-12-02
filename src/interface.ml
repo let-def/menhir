@@ -19,11 +19,73 @@ open TokenType
 
 include PreInterface
 
-let typedefs = 
+(* ------------------------------------------------------------------------ *)
+
+(* Definitions to be exported for step-by-step engine interface. *)
+
+let steptypdefs =
+  let tyenv = TypApp ("MenhirLib.EngineTypes.env", [
+      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp ("token",[]);
+    ])
+  in
+  [
+    { typename = "state"; typerhs = TDefSum [];
+      typeparams = []; typeconstraint = None; typeprivate = false };
+    { typename = "step"; typeprivate = true;
+      typerhs = TDefSum [
+          { dataname = "Step_run";
+            datavalparams = [tyenv];
+            datatypeparams = None
+          };
+          { dataname = "Step_error";
+            datavalparams = [tyenv];
+            datatypeparams = None
+          };
+          { dataname = "Step_action";
+            datavalparams = [tyenv];
+            datatypeparams = None
+          };
+        ];
+      typeparams = []; typeconstraint = None };
+    { typename = "outcome"; typeprivate = false;
+      typerhs = TDefSum [
+          { dataname = "Step";
+            datavalparams = [TypApp ("step",[])];
+            datatypeparams = None
+          };
+          { dataname = "Accept";
+            datavalparams = [TypApp ("semantic_value",[])];
+            datatypeparams = None
+          };
+          { dataname = "Reject";
+            datavalparams = [];
+            datatypeparams = None
+          };
+          { dataname = "Feed";
+            datavalparams = [TypArrow (TypTuple [
+                TypApp ("Lexing.position",[]);
+                TypApp ("token",[]);
+                TypApp ("Lexing.position",[]);
+              ], TypApp ("step",[]))];
+            datatypeparams = None
+          };
+        ];
+      typeparams = []; typeconstraint = None };
+  ]
+
+let stepvaldecl =
+  let ty n = TypApp (n,[]) in
+  [
+    "initial", { quantifiers = []; body = arrow (ty "state") (ty "outcome") };
+    "step",    { quantifiers = []; body = arrow (ty "step") (ty "outcome") };
+  ]
+
+let typedefs =
+  PreInterface.interface.typedecls @
   if Settings.typed_values then
     let nonterminaltypedef =
       let add_nt sym ocamltype datadefs =
-        { 
+        {
           dataname = "NT'" ^ Misc.normalize sym;
           datavalparams = [TypTextual ocamltype];
           datatypeparams = None;
@@ -39,13 +101,19 @@ let typedefs =
         typeparams = [];
         typerhs = TDefSum datadefs;
         typeconstraint = None;
+        typeprivate = false;
       }
     in
     let valuetypedef =
-      { 
-        typename = "sem_value";
+      {
+        typename = "semantic_value";
         typeparams = [];
         typerhs = TDefSum [
+            {
+              dataname = "Bottom";
+              datavalparams = [];
+              datatypeparams = None;
+            };
             {
               dataname = "Terminal";
               datavalparams = [TypTextual (Stretch.Inferred "token")];
@@ -58,15 +126,40 @@ let typedefs =
             }
           ];
         typeconstraint = None;
+        typeprivate = false;
       }
     in
-    tokentypedef @ [nonterminaltypedef; valuetypedef]
+    [nonterminaltypedef; valuetypedef]
+  else if Settings.stepwise then
+    [ { typename = "semantic_value";
+        typerhs = TAbbrev (TypApp ("Obj.t", []));
+        typeparams = []; typeconstraint = None; typeprivate = false } ]
   else
-    tokentypedef
+    []
+
+let typedecls =
+  typedefs @
+  if Settings.stepwise
+  then steptypdefs
+  else []
+
+let valdecls =
+  PreInterface.interface.valdecls @
+    if Settings.stepwise then
+      let stepentryvaldecls =
+        StringSet.fold (fun symbol decls ->
+            (Misc.normalize symbol ^ "_state",
+             {quantifiers = []; body = TypApp ("state",[])}) :: decls
+          ) PreFront.grammar.start_symbols []
+      in
+      stepvaldecl @ stepentryvaldecls
+    else []
 
 let interface =
   { PreInterface.interface with
-    typedecls = typedefs; }
+    typedecls = typedecls;
+    valdecls = valdecls;
+  }
 
 (* Writing the interface to a file. *)
 
