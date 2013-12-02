@@ -233,9 +233,12 @@ module type TABLE = sig
      productions and accepting productions. All we have to do is catch that
      exception at top level. *)
 
-  (* Semantic actions are allowed to raise [Error]. *)
+  (* Entry points of grammar are allowed to raise [Accept result]. *)
 
   exception Accept of semantic_value
+
+  (* Semantic actions are allowed to raise [Error]. *)
+
   exception Error
 
   type semantic_action =
@@ -337,6 +340,10 @@ module type ENGINE = sig
      raises [Error]. *)
 
   exception Error
+
+  (* Entry points of the grammar leave the parser by raising [Accept]. *)
+
+  exception Accept of semantic_value
 
   val entry:
     state ->
