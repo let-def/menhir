@@ -66,3 +66,4 @@ val marrow: typ list -> typ -> typ
 val prefix: string -> string
 val dataprefix: string -> string
 val tvprefix: string -> string
+val ntmangle: string -> string
