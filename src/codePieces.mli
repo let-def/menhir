@@ -109,6 +109,11 @@ val tokpatv: Terminal.t -> pattern
 
 val tokspat: TerminalSet.t -> pattern
 
+(* [branchonterminal pat branch] generates a list of branch to destructure a
+   token. *)
+
+val branchonterminal: (Terminal.t -> pattern) -> (Terminal.t -> expr) -> branch list
+
 (* [destructuretokendef name codomain bindsemv branch] generates the
    definition of a function that destructure tokens. [name] is the
    name of the function that is generated. [codomain] is its return

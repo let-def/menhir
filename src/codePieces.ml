@@ -175,6 +175,18 @@ let tokspat toks =
     ) toks []
   )
 
+(* [branchonterminal pat branch] generates a list of branch to destructure a
+   token. *)
+
+let branchonterminal pat branch =
+  Terminal.fold (fun tok branches ->
+      if Terminal.pseudo tok then
+        branches
+      else
+        { branchpat = pat tok;
+          branchbody = branch tok } :: branches
+    ) []
+
 (* [destructuretokendef name codomain bindsemv branch] generates the
    definition of a function that destructures tokens. [name] is the
    name of the function that is generated. [codomain] is its return

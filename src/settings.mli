@@ -186,3 +186,9 @@ val fixedexc: bool
    stack. Require --infer. *)
 
 val typed_values: bool
+
+(* This flag allows the generated parser to be fed with a non-terminal together
+ * with its semantic value, in case the stream token is suspected to contain
+ * errors. Error recovery is therefore delegated to external code *)
+
+val feed_nonterminal: bool

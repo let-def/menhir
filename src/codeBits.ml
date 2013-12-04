@@ -63,7 +63,7 @@ let scheme qs t =
   {
     quantifiers = qs;
     body = t
-  } 
+  }
 
 (* Building a type scheme with no quantifiers out of a type. *)
 
@@ -159,3 +159,6 @@ let tvprefix name =
     name
   else
     "ttv_" ^ name
+
+let ntmangle symbol =
+  "NT'" ^ Misc.normalize symbol
