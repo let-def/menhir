@@ -43,14 +43,14 @@ module TokPrecedence = struct
   let levelip id properties =
     lazy (use id), properties.tk_priority
 
-  let leveli id = 
+  let leveli id =
     let properties =
       try
 	StringMap.find id Front.grammar.tokens
       with Not_found ->
 	assert false (* well-formedness check has been performed earlier *)
     in
-    levelip id properties    
+    levelip id properties
 
   (* This function is invoked after the automaton has been constructed.
      It warns about unused precedence levels. *)
@@ -88,7 +88,7 @@ module Nonterminal = struct
 
   let original_nonterminals =
     StringMap.fold (fun nt _ rules -> nt :: rules) Front.grammar.rules []
-  
+
   let start =
     List.length new_start_nonterminals
 
@@ -176,23 +176,49 @@ module Terminal = struct
      Pseudo-tokens (used in %prec declarations, but never
      declared using %token) are filtered out. *)
 
-  let (n : int), (name : string array), (map : int StringMap.t) =
-    let tokens = 
+  let (nt_start : int), (nt_count : int),
+      ((n : int), (name : string array), (map : int StringMap.t)) =
+    let tokens =
       StringMap.fold (fun token properties tokens ->
 	if properties.tk_is_declared then token :: tokens else tokens
       ) Front.grammar.tokens []
+    in
+    let nonterminals =
+      if Settings.feed_nonterminal then
+        let prepend nt acc =
+          CodeBits.ntmangle (Nonterminal.print true nt) :: acc
+	in
+	List.rev (Nonterminal.foldx prepend [])
+      else []
     in
     match tokens with
     | [] ->
 	Error.error [] "no tokens have been declared."
     | _ ->
-	Misc.index ("error" :: tokens @ [ "#" ])
+      List.length ("error" :: tokens), List.length nonterminals,
+      Misc.index ("error" :: tokens @ nonterminals @ [ "#" ])
 
   let print tok =
     name.(tok)
 
   let lookup name =
     StringMap.find name map
+
+  let lookup_nt nt =
+    let nt = nt - Nonterminal.start in
+    if nt >= 0 && nt < nt_count then
+      nt_start + nt
+    else
+      raise Not_found
+
+  let is_nt t =
+    nt_start <= t && t < nt_start + nt_count
+
+  let as_nt t =
+    if is_nt t then
+      Some (t - nt_start + Nonterminal.start)
+    else
+      None
 
   let sharp =
     lookup "#"
@@ -203,7 +229,7 @@ module Terminal = struct
   let pseudo tok =
     (tok = sharp) || (tok = error)
 
-  let token_properties = 
+  let token_properties =
     let not_so_dummy_properties = (* applicable to [error] and [#] *)
       {
 	tk_filename      = "__primitives__";
@@ -215,11 +241,18 @@ module Terminal = struct
       }
     in
     Array.init n (fun tok ->
-      try 
-	 StringMap.find name.(tok) Front.grammar.tokens 
-       with Not_found ->
-	 assert (tok = sharp || tok = error);
-	 not_so_dummy_properties
+      try
+	StringMap.find name.(tok) Front.grammar.tokens
+      with Not_found ->
+      match as_nt tok with
+      | Some nt ->
+	{ not_so_dummy_properties with
+	  tk_priority = ParserAux.current_reduce_precedence ();
+	  tk_associativity = NonAssoc;
+	  tk_ocamltype = Nonterminal.ocamltype nt }
+      | None ->
+	assert (tok = sharp || tok = error);
+	not_so_dummy_properties
     )
 
   let () =
@@ -227,7 +260,7 @@ module Terminal = struct
       Printf.fprintf f "Grammar has %d terminal symbols.\n" (n - 2)
     )
 
-  let precedence_level tok = 
+  let precedence_level tok =
     TokPrecedence.levelip (print tok) token_properties.(tok)
 
   let associativity tok =
@@ -273,7 +306,7 @@ end
 
 module TerminalSet = struct
 
-  include CompressedBitSet 
+  include CompressedBitSet
 
   let print toks =
     let _, accu =
@@ -422,6 +455,8 @@ module Production = struct
     ) Front.grammar.rules 0 in
     Error.logG 1 (fun f -> Printf.fprintf f "Grammar has %d productions.\n" n);
     n + StringSet.cardinal Front.grammar.start_symbols
+      + (if not Settings.feed_nonterminal then 0
+         else StringMap.cardinal Front.grammar.rules)
 
   let p2i prod =
     prod
@@ -462,17 +497,37 @@ module Production = struct
       NonterminalMap.add nt k startprods
     ) Front.grammar.start_symbols (0, NonterminalMap.empty)
 
-  let prec_decl : symbol located option array = 
+  let prec_decl : symbol located option array =
     Array.make n None
 
-  let reduce_precedence : precedence_level array = 
+  let reduce_precedence : precedence_level array =
     Array.make n UndefinedPrecedence
+
+  let prod_of_nonterminal_action =
+    Action.from_stretch {
+      stretch_filename    = "generated code";
+      stretch_linenum     = 1;
+      stretch_linecount   = 1;
+      stretch_raw_content = " v ";
+      stretch_content     = " v ";
+      stretch_keywords    = [];
+    }
+
+  let prod_of_nonterminal nt k =
+    table.(k) <- (nt, [| Symbol.T (Terminal.lookup_nt nt) |]);
+    identifiers.(k) <- [|"v"|];
+    used.(k) <- [|true|];
+    actions.(k) <- Some prod_of_nonterminal_action;
+    reduce_precedence.(k) <- ParserAux.current_reduce_precedence ();
+    prec_decl.(k) <- None;
+    positions.(k) <- [ Positions.dummy ];
+    k+1
 
   let (_ : int) = StringMap.fold (fun nonterminal { branches = branches } k ->
     let nt = Nonterminal.lookup nonterminal in
     let k' = List.fold_left (fun k branch ->
       let action = branch.action
-      and sprec = branch.branch_shift_precedence 
+      and sprec = branch.branch_shift_precedence
       and rprec = branch.branch_reduce_precedence in	
       let symbols = Array.of_list branch.producers in
       table.(k) <- (nt, Array.map (fun (v, _) -> Symbol.lookup v) symbols);
@@ -504,6 +559,10 @@ module Production = struct
       positions.(k) <- [ branch.branch_position ];
       k+1
     ) k branches in
+    let k' = if Settings.feed_nonterminal && not (Nonterminal.is_start nt)
+             then prod_of_nonterminal nt k'
+             else k'
+    in
     ntprods.(nt) <- (k, k');
     k'
   ) Front.grammar.rules start
@@ -1101,28 +1160,28 @@ module Precedence = struct
 
   type order = Lt | Gt | Eq | Ic
 
-  let precedence_order p1 p2 = 
+  let precedence_order p1 p2 =
     match p1, p2 with
       |	UndefinedPrecedence, _
-      | _, UndefinedPrecedence -> 
+      | _, UndefinedPrecedence ->
 	  Ic
 
       | PrecedenceLevel (m1, l1, _, _), PrecedenceLevel (m2, l2, _, _) ->
 	  if not (Mark.same m1 m2) then
 	    Ic
 	  else
-	    if l1 > l2 then 
-	      Gt 
-	    else if l1 < l2 then 
+	    if l1 > l2 then
+	      Gt
+	    else if l1 < l2 then
 	      Lt
-	    else 
+	    else
 	      Eq
 
   let shift_reduce tok prod =
     let fact1, tokp  = Terminal.precedence_level tok
     and fact2, prodp = Production.shift_precedence prod in
     match precedence_order tokp prodp with
-   
+
       (* Our information is inconclusive. Drop [fact1] and [fact2],
 	 that is, do not record that this information was useful. *)
 
@@ -1140,7 +1199,7 @@ module Precedence = struct
 	| Ic ->
 	    assert false (* already dispatched *)
 
-	| Eq -> 
+	| Eq ->
 	    begin
 	      match Terminal.associativity tok with
 	      | LeftAssoc  -> ChooseReduce
@@ -1159,23 +1218,23 @@ module Precedence = struct
 
 
   let reduce_reduce prod1 prod2 =
-    let rp1 = Production.reduce_precedence.(prod1) 
+    let rp1 = Production.reduce_precedence.(prod1)
     and rp2 = Production.reduce_precedence.(prod2) in
     match precedence_order rp1 rp2 with
-    | Lt -> 
+    | Lt ->
 	Some prod1
-    | Gt -> 
+    | Gt ->
 	Some prod2
-    | Eq -> 
-	(* the order is strict except in presence of inlining: 
+    | Eq ->
+	(* the order is strict except in presence of inlining:
 	   two branches can have the same precedence level when
 	   they come from an inlined one. *)
 	None
-    | Ic -> 
+    | Ic ->
 	None
 
 end
-  
+
 let diagnostics () =
   TokPrecedence.diagnostics();
   Production.diagnostics()
