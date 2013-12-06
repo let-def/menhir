@@ -30,8 +30,8 @@ open Positions
 /* ------------------------------------------------------------------------- */
 /* Tokens. */
 
-%token TOKEN TYPE LEFT RIGHT NONASSOC START PREC PUBLIC COLON BAR EOF EQUAL
-%token INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
+%token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
@@ -149,6 +149,34 @@ Here are sample valid declarations:
   %left PLUS TIMES
   %nonassoc unary_minus
   %right CONCAT";
+      []
+    }
+
+| PRIORITIES ss = clist(symbol) %prec decl
+    { match ss with
+      | [] ->
+Error.warning (Positions.two $startpos $endpos) "\
+Priorities declaration expects a list of terminals.
+Here is a sample valid declaration:
+  %priorities PLUS TIMES";
+        []
+      | hd :: tl ->
+        let _, priorities =
+          List.fold_left
+            (fun (t1,acc) t2 ->
+              let p = join (position t1) (position t2) in
+              (t2, with_pos p (DPriority (value t1, value t2)) :: acc))
+            (hd,[]) tl
+        in
+        priorities
+    }
+
+| PRIORITIES clist(symbol) error
+| PRIORITIES error
+    { Error.signal (Positions.two $startpos $endpos) "\
+Syntax error in a priority group declaration.
+Here is a sample valid declaration:
+  %priorities PLUS TIMES";
       []
     }
 

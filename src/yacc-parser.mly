@@ -26,8 +26,8 @@ open Positions
 
 %}
 
-%token TOKEN TYPE LEFT RIGHT NONASSOC START PREC PUBLIC COLON BAR EOF EQUAL
-%token INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
+%token TOKEN TYPE LEFT RIGHT NONASSOC PRIORITIES START PREC PUBLIC COLON BAR
+%token EOF EQUAL INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
 %token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
@@ -101,6 +101,20 @@ declaration:
 | priority_keyword symbols
     { let prec = ParserAux.current_token_precedence (rhs_start_pos 1) (rhs_end_pos 1) in
       List.map (Positions.map (fun symbol -> DTokenProperties (symbol, $1, prec))) $2 }
+
+| PRIORITIES symbols
+    { match $2 with
+      | [] -> []
+      | hd :: tl ->
+        let _, priorities =
+          List.fold_left
+            (fun (t1,acc) t2 ->
+              let p = join (position t1) (position t2) in
+              (t2, with_pos p (DPriority (value t1, value t2)) :: acc))
+            (hd,[]) tl
+        in
+        priorities
+    }
 
 | PARAMETER OCAMLTYPE
     { [ unknown_pos (DParameter $2) ] }

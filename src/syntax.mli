@@ -57,6 +57,8 @@ type precedence_level =
 
   | PrecedenceLevel of Mark.t * int * Lexing.position * Lexing.position
 
+  | ExplicitLevel of Priorities.node * Lexing.position * Lexing.position
+
 type token_properties =
     {
                tk_filename      : filename;
@@ -92,13 +94,17 @@ type declaration =
 
   | DStart of nonterminal
 
-    (* Priority and associativity declaration. *)
+    (* Yacc-style priority and associativity declaration. *)
 
   | DTokenProperties of terminal * token_associativity * precedence_level
 
     (* Type declaration. *)
 
   | DType of Stretch.ocamltype * parameter
+
+    (* Explicit order declaration. *)
+
+  | DPriority of terminal * terminal
 
 type branch_shift_precedence =
     symbol Positions.located option

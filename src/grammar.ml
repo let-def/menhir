@@ -473,7 +473,7 @@ module Production = struct
     let k' = List.fold_left (fun k branch ->
       let action = branch.action
       and sprec = branch.branch_shift_precedence
-      and rprec = branch.branch_reduce_precedence in	
+      and rprec = branch.branch_reduce_precedence in
       let symbols = Array.of_list branch.producers in
       table.(k) <- (nt, Array.map (fun (v, _) -> Symbol.lookup v) symbols);
       identifiers.(k) <- Array.mapi (fun i (_, ido) ->
@@ -1099,13 +1099,15 @@ module Precedence = struct
     | ChooseNeither
     | DontKnow
 
-  type order = Lt | Gt | Eq | Ic
+  type order = PartialOrder.order = Lt | Gt | Eq | Ic
 
   let precedence_order p1 p2 =
     match p1, p2 with
-      |	UndefinedPrecedence, _
-      | _, UndefinedPrecedence ->
-          Ic
+      | UndefinedPrecedence, _
+      | _, UndefinedPrecedence
+      | PrecedenceLevel _, ExplicitLevel _
+      | ExplicitLevel _, PrecedenceLevel _ ->
+        Ic
 
       | PrecedenceLevel (m1, l1, _, _), PrecedenceLevel (m2, l2, _, _) ->
           if not (Mark.same m1 m2) then
@@ -1117,6 +1119,9 @@ module Precedence = struct
               Lt
             else
               Eq
+
+      | ExplicitLevel (p1,_,_), ExplicitLevel (p2,_,_) ->
+        Priorities.compare p1 p2
 
   let shift_reduce tok prod =
     let fact1, tokp  = Terminal.precedence_level tok

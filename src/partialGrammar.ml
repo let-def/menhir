@@ -138,6 +138,39 @@ let join_declaration filename (grammar : grammar) decl =
       token_properties.tk_associativity <- assoc;
       grammar
 
+  | DPriority (ta, tb) ->
+    let find terminal grammar =
+      let token, grammar =
+	try
+	  StringMap.find terminal grammar.p_tokens, grammar
+	with Not_found ->
+	let p =
+	  {
+	    tk_filename      = filename;
+	    tk_ocamltype     = None;
+	    tk_associativity = UndefinedAssoc;
+	    tk_priority      = UndefinedPrecedence;
+	    tk_is_declared   = false;
+	    (* Will be updated later. *)
+	    tk_position      = decl.position;
+	  }
+	in
+	let p_tokens = StringMap.add terminal p grammar.p_tokens in
+	p, { grammar with p_tokens }
+      in
+      match token.tk_priority with
+	| ExplicitLevel (pr, _, _) -> pr, grammar
+        | _ ->
+	  let pr, po = Priorities.fresh terminal, Lexing.dummy_pos in
+	  token.tk_priority <- ExplicitLevel (pr, po, po);
+	  pr, grammar
+    in
+    let pa, grammar = find ta grammar in
+    let pb, grammar = find tb grammar in
+    Priorities.less_than pa pb;
+    grammar
+
+
 (* ------------------------------------------------------------------------- *)
 (* This stores an optional trailer into a grammar.
    Trailers are stored in an arbitrary order. *)
