@@ -59,13 +59,20 @@ module TokPrecedence = struct
     StringMap.iter (fun id properties ->
       if not (StringSet.mem id !ever_useful) then
         match properties.tk_priority with
-        | UndefinedPrecedence ->
+        | UndefinedPrecedence | ExplicitLevel _ ->
             ()
         | PrecedenceLevel (_, _, pos1, pos2) ->
             Error.grammar_warning (Positions.two pos1 pos2)
               (Printf.sprintf "the precedence level assigned to %s is never useful." id)
     ) Front.grammar.tokens
 
+  let () =
+    match Priorities.check_for_cycle () with
+    | None -> ()
+    | Some ps ->
+      Error.error []
+        (Printf.sprintf "cycle detected in %%priorities declarations: %s."
+           (String.concat " < " (List.map Priorities.print ps)))
 end
 
 (* ------------------------------------------------------------------------ *)

@@ -18,12 +18,17 @@ module Run (G : sig
 
   val iter: (node -> unit) -> unit
 
+  (* Exception raised during functor instanciation if a cycle is detected *)
+
+  exception Cycle of node list
+
 end) = struct
 
   let order, reachability = 
     let result = Array.create G.n (-1) in
     let reachability = Array.create G.n CompressedBitSet.empty in
     let position = ref G.n in
+    let stack = ref [] in
     (* Memoize function over DAG *)
     let memo f node =
       let index = G.index node in
@@ -32,15 +37,25 @@ end) = struct
       | -1 ->
         (* Temporary mark (node on stack) *)
         result.(index) <- -2;
+	stack := node :: !stack;
         let r = f node in
         (* All successors of node marked, add the node itself to the
          * topological sort  *)
         decr position;
         result.(index) <- !position;
+	stack := (match !stack with
+	    | node' :: stack' when node == node' -> stack'
+	    | _ -> assert false);
         reachability.(index) <- r;
         r
       (* Already on stack: not a DAG *)
-      | -2 -> failwith "Token priorities do not form a DAG"
+      | -2 ->
+	let rec aux acc = function
+	  | node' :: _ when G.index node' = index -> node' :: acc
+	  | node' :: tl -> aux (node' :: acc) tl
+	  | _ -> assert false
+	in
+	raise (G.Cycle (aux [node] !stack))
       (* Already processed *)
       | _ -> reachability.(index)
     in
@@ -70,15 +85,19 @@ end
 module Make (U : sig end) : sig
 
   type node
+  exception Cycle of node list
 
   val fresh: string -> node
   val less_than: node -> node -> unit
-
+  val check_for_cycle: unit -> node list option
   val compare: node -> node -> order
   val print: node -> string
+  val successors: node -> node list
+
 end = struct
 
   type node = {id: int; name: string; mutable succ: node list}
+  exception Cycle of node list
 
   let n = ref 0
   let nodes = ref []
@@ -86,14 +105,16 @@ end = struct
   let compare = ref (fun _ _ -> Ic)
 
   let update_compare n1 n2 =
-    let module G = struct
-        type t = node
-        type node = t
-        let n = !n
-        let index node = node.id
-        let successors f node acc =
-          List.fold_left (fun acc node -> f node acc) acc node.succ
-        let iter f = List.iter f !nodes
+    let module G =
+      struct
+	type t = node
+	type node = t
+	exception Cycle = Cycle
+	let n = !n
+	let index node = node.id
+	let successors f node acc =
+	  List.fold_left (fun acc node -> f node acc) acc node.succ
+	let iter f = List.iter f !nodes
       end
     in
     let module R = Run (G) in
@@ -101,7 +122,7 @@ end = struct
     R.compare n1 n2
 
   let fresh name =
-    Printf.eprintf "fresh node %s\n%!" name;
+    (*Printf.eprintf "fresh node %s\n%!" name;*)
     let node = {id = !n; name; succ = []} in
     nodes := node :: !nodes;
     compare := update_compare;
@@ -109,17 +130,26 @@ end = struct
     node
 
   let less_than n1 n2 =
-    Printf.eprintf "%s is less than %s\n%!" n1.name n2.name;
+    (*Printf.eprintf "%s is less than %s\n%!" n1.name n2.name;*)
     n1.succ <- n2 :: n1.succ;
     compare := update_compare
 
   let compare a b = 
     let c = !compare a b in
-    Printf.eprintf "%s %s %s\n%!"
+    (*Printf.eprintf "%s %s %s\n%!"
       a.name
       (match c with Lt -> "<" | Eq -> "=" | Gt -> ">" | Ic -> "<>")
-      b.name;
+      b.name;*)
     c
 
+  let check_for_cycle () =
+    try match !nodes with
+      | n1 :: _ -> ignore (compare n1 n1); None
+      | [] -> None
+    with Cycle n -> Some n
+
   let print {name} = name
+
+  let successors n = n.succ
+
 end

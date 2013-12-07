@@ -21,6 +21,8 @@
 %left TIMES DIV         /* medium precedence */
 %nonassoc UMINUS        /* highest precedence */
 
+%priorities PLUS MINUS TIMES DIV UMINUS PLUS
+
 %start <int> main
 
 %%

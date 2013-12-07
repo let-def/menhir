@@ -40,7 +40,7 @@ let rec insert_in_partitions item m = function
       t :: (insert_in_partitions item m partitions)
 
 let insert (undefined, partitions) = function
-  | (item, UndefinedPrecedence) ->
+  | (item, (UndefinedPrecedence | ExplicitLevel _)) ->
       ((item, 0) :: undefined, partitions)
 
   | (item, PrecedenceLevel (m, v, _, _)) ->
@@ -117,7 +117,17 @@ let print_tokens mode b g =
                        last_prop
 
             ) None ordered_tokens);
-  Printf.fprintf b "\n"
+  Printf.fprintf b "\n";
+  List.iter (fun (token, v) ->
+    let prop = StringMap.find token g.tokens in
+    match prop.tk_priority with
+    | UndefinedPrecedence | PrecedenceLevel _ -> ()
+    | ExplicitLevel (p,_,_) ->
+      List.iter (fun p' ->
+          Printf.fprintf b "%%priorities %s %s\n"
+            (Priorities.print p) (Priorities.print p')
+      ) (Priorities.successors p)
+  ) ordered_tokens
 
 let print_types mode b g =
   StringMap.iter (fun symbol ty ->
@@ -164,6 +174,8 @@ let branches_order r r' =
     match b.branch_reduce_precedence, b'.branch_reduce_precedence with
       | UndefinedPrecedence, _ | _, UndefinedPrecedence ->
           0
+      | ExplicitLevel _, _ | _, ExplicitLevel _ ->
+          assert false
       | PrecedenceLevel (m, l, _, _), PrecedenceLevel (m', l', _, _) ->
           if Mark.same m m' then
             if l < l' then
