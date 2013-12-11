@@ -63,17 +63,14 @@ let fnext =
 let fstack =
   field "stack"
 
+let ftoken =
+  field "token"
+
 let fcurrent =
   field "current"
 
-let flexbuf =
-  field "lexbuf"
-
 let fpreviouserror =
   field "previouserror"
-
-let flex_start_p =
-  "Lexing.lex_start_p"
 
 let interpreter =
   "MenhirInterpreter"
@@ -145,22 +142,25 @@ let reducecellcasts prod i symbol casts =
       else
 	(* Project: [let id = (match id with Nonterminal (NT'... id) -> id
                                            | _ -> assert false)] *)
-	let kind, cstr = match symbol with
+	let kind, cstr, has_value = match symbol with
 	  | Symbol.T t when Terminal.is_nt t -> "Nonterminal",
-			  Terminal.print t
+			  Terminal.print t, true
 	  | Symbol.T t -> "Terminal",
-			  Terminal.print t
+			  Terminal.print t, (Terminal.ocamltype t <> None)
 	  | Symbol.N n -> "Nonterminal",
-			  ntmangle (Nonterminal.print true n)
+			  ntmangle (Nonterminal.print true n), true
 	in
-	(
-	  PVar id,
-	  EMatch (EVar id, [
-	    { branchpat = PData (kind, [PData (cstr, [PVar id])]);
-	      branchbody = EVar id};
-	    { branchpat = PWildcard;
-	      branchbody = EApp (EVar "assert", [EVar "false"]) };
-	  ])
+	(if has_value then
+	  (
+	    PVar id,
+	    EMatch (EVar id, [
+	      { branchpat = PData (kind, [PData (cstr, [PVar id])]);
+	        branchbody = EVar id};
+	      { branchpat = PWildcard;
+	        branchbody = EApp (EVar "assert", [EVar "false"]) };
+	    ])
+	  )
+	 else (PVar id, EUnit)
 	) :: casts
     end
   else
@@ -198,7 +198,9 @@ let reducebody prod =
       if length > 0 then
 	EVar (Printf.sprintf "_startpos_%s_" ids.(0))
       else
-	ERecordAccess(ERecordAccess (EVar env, flexbuf), flex_start_p)
+	ELet ([(PTuple [PVar "startpos"; PWildcard; PWildcard],
+		ERecordAccess (EVar env, ftoken))],
+	      EVar "startpos")
     ) ::
     ( PVar endp,
       if length > 0 then
