@@ -52,7 +52,7 @@ let steptypdefs =
           };
         ];
       typeparams = []; typeconstraint = None };
-    { typename = "outcome"; typeprivate = false;
+    { typename = "parser"; typeprivate = false;
       typerhs = TDefSum [
           { dataname = "Step";
             datavalparams = [TypApp ("step",[])];
@@ -81,8 +81,8 @@ let steptypdefs =
 let stepvaldecl =
   let ty n = TypApp (n,[]) in
   [
-    "initial", { quantifiers = []; body = arrow (ty "state") (ty "outcome") };
-    "step",    { quantifiers = []; body = arrow (ty "step") (ty "outcome") };
+    "initial", { quantifiers = []; body = arrow (ty "state") (ty "parser") };
+    "step",    { quantifiers = []; body = arrow (ty "step") (ty "parser") };
   ]
 
 let typedefs =

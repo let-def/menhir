@@ -45,7 +45,7 @@ module Make (T : TABLE) = struct
     | Step_error  of env'
     | Step_action of env'
 
-  type outcome =
+  type parser =
     | Step   of step
     | Accept of semantic_value
     | Reject
@@ -96,7 +96,7 @@ module Make (T : TABLE) = struct
      Here, the code is structured in a slightly different way. It is up to
      the caller of [run] to indicate whether to discard a token. *)
 
-  let rec run env : outcome =
+  let rec run env : parser =
 
     (* Log the fact that we just entered this state. *)
     
@@ -113,7 +113,7 @@ module Make (T : TABLE) = struct
       continue (* there is none; continue below *)
       env
 
-  and continue env : outcome =
+  and continue env : parser =
 
     (* There is no default reduction. Consult the current lookahead token
        so as to determine which action should be taken. *)
@@ -139,7 +139,7 @@ module Make (T : TABLE) = struct
      a default reduction. We also know that the current lookahead token is
      not [error]: it is a real token, stored in [env.token]. *)
 
-  and action env : outcome =
+  and action env : parser =
 
     (* We consult the two-dimensional action table, indexed by the
        current state and the current lookahead token, in order to
@@ -166,7 +166,7 @@ module Make (T : TABLE) = struct
       (terminal : terminal)
       (value : semantic_value)
       (s' : state)
-      : outcome =
+      : parser =
 
     (* Log the transition. *)
 
@@ -196,7 +196,7 @@ module Make (T : TABLE) = struct
 
   (* This function takes care of reductions. *)
 
-  and reduce env (prod : production) : outcome =
+  and reduce env (prod : production) : parser =
 
     (* Log a reduction event. *)
 
@@ -242,7 +242,7 @@ module Make (T : TABLE) = struct
   (* [initiate] and [errorbookkeeping] initiate error handling. See the functions
      by the same names in [CodeBackend]. *)
 
-  and initiate env : outcome =
+  and initiate env : parser =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
       Log.discarding_last_token (T.token2terminal (snd3 env.token));
@@ -258,7 +258,7 @@ module Make (T : TABLE) = struct
 
   (* [error] handles errors. *)
 
-  and error env : outcome =
+  and error env : parser =
 
     (* Consult the column associated with the [error] pseudo-token in the
        action table. *)

@@ -315,15 +315,15 @@ module type STEP_ENGINE = sig
     | Step_error  of (state, semantic_value, token) env
     | Step_action of (state, semantic_value, token) env
 
-  type outcome =
+  type parser =
     | Step   of step
     | Accept of semantic_value
     | Reject
     | Feed   of (Lexing.position * token * Lexing.position -> step)
 
-  val initial: state -> outcome
+  val initial: state -> parser
 
-  val step: step -> outcome
+  val step: step -> parser
 
 end
 
