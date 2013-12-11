@@ -99,10 +99,9 @@ module Make (T : TableFormat.TABLES)
     (* code = 1 + state *)
     code - 1
 
-  exception Accept of semantic_value
+  exception Accept = T.Accept
 
-  exception Error =
-	T.Error
+  exception Error = T.Error
 
   type semantic_action =
     (state, semantic_value, token) EngineTypes.env ->
