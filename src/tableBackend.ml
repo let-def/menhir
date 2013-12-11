@@ -194,20 +194,16 @@ let reducebody prod =
      production. *)
 
   let posbindings =
-    ( PVar startp,
+    [
       if length > 0 then
-	EVar (Printf.sprintf "_startpos_%s_" ids.(0))
+        PTuple [PVar startp; PVar endp],
+        ETuple [ EVar (Printf.sprintf "_startpos_%s_" ids.(0));
+                 EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
+               ]
       else
-	ELet ([(PTuple [PVar "startpos"; PWildcard; PWildcard],
-		ERecordAccess (EVar env, ftoken))],
-	      EVar "startpos")
-    ) ::
-    ( PVar endp,
-      if length > 0 then
-	EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
-      else
-	EVar startp
-    ) :: []
+        PTuple [PVar startp; PWildcard; PVar endp],
+        ERecordAccess (EVar env, ftoken)
+    ]
   in
 
   (* Is this is one of the start productions? *)
