@@ -83,6 +83,40 @@ let stepvaldecl =
                           (arrow tytokentuple (ty ~p:[ty "step"] "parser")) };
   ]
 
+let querymoddef =
+  let action_desc = "[`Shift | `Shift_and_discard | `Reduce | `Fail]" in
+  "Query", {
+
+    paramdecls = [];
+
+    excdecls = [];
+
+    typedecls = [
+      { typename = "terminal"; typeprivate = true;
+        typerhs = TAbbrev (ty "int");
+        typeparams = []; typeconstraint = None }
+    ];
+
+    valdecls = [
+      "index", type2scheme
+        (arrow tokenkind (ty "terminal"));
+      "action", type2scheme
+        (arrow (ty "state") (arrow (ty "terminal") (ty action_desc)));
+      "default_reduction", type2scheme
+        (arrow (ty "state") (ty "bool"));
+      "iter_states", type2scheme
+        (arrow (arrow (ty "state") tunit) tunit);
+    ];
+
+    moddecls = [];
+
+  }
+
+let moddecls =
+  if Settings.stepwise
+  then [querymoddef]
+  else []
+
 let typedefs =
   PreInterface.interface.typedecls @
   if Settings.typed_values then
@@ -135,7 +169,7 @@ let typedefs =
     [nonterminaltypedef; valuetypedef]
   else if Settings.stepwise then
     [ { typename = "semantic_value";
-        typerhs = TAbbrev (TypApp ("Obj.t", []));
+        typerhs = TAbbrev (ty "Obj.t");
         typeparams = []; typeconstraint = None; typeprivate = false } ]
   else
     []
@@ -152,7 +186,7 @@ let valdecls =
       let stepentryvaldecls =
         StringSet.fold (fun symbol decls ->
             (Misc.normalize symbol ^ "_state",
-             {quantifiers = []; body = TypApp ("state",[])}) :: decls
+             {quantifiers = []; body = ty "state"}) :: decls
           ) PreFront.grammar.start_symbols []
       in
       stepvaldecl @ stepentryvaldecls
@@ -162,6 +196,7 @@ let interface =
   { PreInterface.interface with
     typedecls = typedecls;
     valdecls = valdecls;
+    moddecls = moddecls;
   }
 
 (* Writing the interface to a file. *)

@@ -194,8 +194,8 @@ module type TABLE = sig
   val action:
     state ->
     terminal ->
-    semantic_value ->
-    ('env -> bool -> terminal -> semantic_value -> state -> 'answer) ->
+    'semantic_value ->
+    ('env -> bool -> terminal -> 'semantic_value -> state -> 'answer) ->
     ('env -> production -> 'answer) ->
     ('env -> 'answer) ->
     'env -> 'answer
@@ -232,6 +232,10 @@ module type TABLE = sig
      normally. This convention allows us to not distinguish between regular
      productions and accepting productions. All we have to do is catch that
      exception at top level. *)
+
+  (* For introspection purposes, the user can iterate on all states of the
+     grammar. *)
+  val iter_states: (state -> unit) -> unit
 
   (* Entry points of grammar are allowed to raise [Accept result]. *)
 
@@ -326,6 +330,14 @@ module type STEP_ENGINE = sig
   val step: step parser -> result
 
   val feed: feed parser -> Lexing.position * token * Lexing.position -> step parser
+
+  module Query : sig
+    type terminal
+    val index: token -> terminal
+    val action: state -> terminal -> [`Shift | `Shift_and_discard | `Reduce | `Fail]
+    val default_reduction: state -> bool
+    val iter_states: (state -> unit) -> unit
+  end
 
 end
 

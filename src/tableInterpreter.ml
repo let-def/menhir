@@ -99,6 +99,11 @@ module Make (T : TableFormat.TABLES)
     (* code = 1 + state *)
     code - 1
 
+  let iter_states f =
+    for i = 0 to T.number_of_states - 1 do
+      f i
+    done
+
   exception Accept = T.Accept
 
   exception Error = T.Error

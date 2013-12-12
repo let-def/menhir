@@ -816,6 +816,7 @@ let application = {
           define ("error_value", error_value);
           token2terminal;
           token2value;
+          define ("number_of_states", EIntConst Lr1.n);
           default_reduction;
           error;
           action;
