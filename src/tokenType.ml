@@ -84,10 +84,11 @@ let tokentypedef, tokenprefix =
 		      end) 
       in
       P.interface {
-        paramdecls = PreFront.grammar.parameters;
-        excdecls = [];
+	paramdecls = PreFront.grammar.parameters;
+	excdecls = [];
 	typedecls = [ tokentypedef ];
-	valdecls = []
+	valdecls = [];
+	moddecls = [];
       };
       let module P = 
 	Printer.Make (struct 
@@ -97,14 +98,14 @@ let tokentypedef, tokenprefix =
 		      end) 
       in
       P.program {
-        paramdefs = PreFront.grammar.parameters;
-        prologue = [];
-        excdefs = [];
+	paramdefs = PreFront.grammar.parameters;
+	prologue = [];
+	excdefs = [];
 	typedefs = [ tokentypedef ];
-        nonrecvaldefs = [];
+	nonrecvaldefs = [];
 	valdefs = [];
 	moduledefs = [];
-        postlogue = [];
+	postlogue = [];
       };
       exit 0
   | Settings.CodeOnly m ->

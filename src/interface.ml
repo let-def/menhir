@@ -164,6 +164,7 @@ let interface =
   { PreInterface.interface with
     typedecls = typedecls;
     valdecls = valdecls;
+    moddecls = [];
   }
 
 (* Writing the interface to a file. *)

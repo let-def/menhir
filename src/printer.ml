@@ -657,8 +657,16 @@ let program f p =
 let valdecl f (x, ts) =
   fprintf f "val %s: %a" x typ ts.body
 
-let interface f i =
-  fprintf f "%a%a%a%!" (excdefs true) i.excdecls typedefs i.typedecls (list valdecl nl) i.valdecls
+let rec interface f i =
+  fprintf f "%a%a%a%a%!" (excdefs true) i.excdecls typedefs i.typedecls (list valdecl nl) i.valdecls (list moddecl nl) i.moddecls
+
+and moddecl f (x, i) =
+  fprintf f "module %s : sig" x;
+  nl f;
+  indent 2 interface f i;
+  nl f;
+  fprintf f "end";
+  nl f
 
 let program p =
   functorparams false program p X.f p.paramdefs

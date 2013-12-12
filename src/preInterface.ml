@@ -64,6 +64,9 @@ let interface = {
   valdecls =
     entryvaldecls;
 
+  moddecls =
+    [];
+
 }
 
 (* Writing the interface to a file. *)
