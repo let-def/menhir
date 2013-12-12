@@ -41,6 +41,10 @@ module type TABLES = sig
 
   val token2value: token -> semantic_value
 
+  (* Number of states (labelled from 0 to n-1) provided only for information *)
+
+  val number_of_states: int
+
   (* Traditionally, an LR automaton is described by two tables, namely, an
      action table and a goto table. See, for instance, the Dragon book.
 

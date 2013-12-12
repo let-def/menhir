@@ -422,5 +422,25 @@ module Make (T : TABLE) = struct
     with T.Accept v -> Accept v
        | Error      -> Reject
 
+  module Query = struct
+    type terminal = T.terminal
+    let index = T.token2terminal
+
+    let action state term =
+      T.action state term ()
+        (fun () discard _term () _state ->
+           if discard then `Shift_and_discard else `Shift)
+        (fun () _prod -> `Reduce)
+        (fun () -> `Fail)
+        ()
+
+    let default_reduction state =
+      T.default_reduction state
+        (fun () _prod -> true)
+        (fun () -> false)
+        ()
+
+    let iter_states = T.iter_states
+  end
 end
 

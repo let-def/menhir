@@ -23,15 +23,16 @@ include PreInterface
 
 (* Definitions to be exported for step-by-step engine interface. *)
 
+let tokenkind =
+  if Settings.feed_nonterminal
+  then "semantic_value"
+  else "token"
+
+let ty n = TypApp (n,[])
+
 let steptypdefs =
-  let tokenkind =
-    if Settings.feed_nonterminal
-    then "semantic_value"
-    else "token"
-  in
-  let tyenv = TypApp ("MenhirLib.EngineTypes.env", [
-      TypApp ("state",[]); TypApp ("semantic_value",[]); TypApp (tokenkind,[]);
-    ])
+  let tyenv = TypApp ("MenhirLib.EngineTypes.env",
+                      [ty "state"; ty "semantic_value"; ty tokenkind])
   in
   [
     { typename = "state"; typerhs = TDefSum [];
@@ -55,11 +56,11 @@ let steptypdefs =
     { typename = "parser"; typeprivate = false;
       typerhs = TDefSum [
           { dataname = "Step";
-            datavalparams = [TypApp ("step",[])];
+            datavalparams = [ty "step"];
             datatypeparams = None
           };
           { dataname = "Accept";
-            datavalparams = [TypApp ("semantic_value",[])];
+            datavalparams = [ty "semantic_value"];
             datatypeparams = None
           };
           { dataname = "Reject";
@@ -68,10 +69,10 @@ let steptypdefs =
           };
           { dataname = "Feed";
             datavalparams = [TypArrow (TypTuple [
-                TypApp ("Lexing.position",[]);
-                TypApp (tokenkind,[]);
-                TypApp ("Lexing.position",[]);
-              ], TypApp ("step",[]))];
+                ty "Lexing.position";
+                ty tokenkind;
+                ty "Lexing.position";
+              ], ty "step")];
             datatypeparams = None
           };
         ];
@@ -79,11 +80,43 @@ let steptypdefs =
   ]
 
 let stepvaldecl =
-  let ty n = TypApp (n,[]) in
   [
     "initial", { quantifiers = []; body = arrow (ty "state") (ty "parser") };
     "step",    { quantifiers = []; body = arrow (ty "step") (ty "parser") };
   ]
+
+let querymoddef =
+  let action_desc = "[`Shift | `Shift_and_discard | `Reduce | `Fail]" in
+  "Query", {
+
+    paramdecls = [];
+
+    excdecls = [];
+
+    typedecls = [
+      { typename = "terminal"; typerhs = TDefSum [];
+        typeparams = []; typeconstraint = None; typeprivate = false };
+    ];
+
+    valdecls = [
+      "index", type2scheme
+        (arrow (ty tokenkind) (ty "terminal"));
+      "action", type2scheme
+        (arrow (ty "state") (arrow (ty "terminal") (ty action_desc)));
+      "default_reduction", type2scheme
+        (arrow (ty "state") (ty "bool"));
+      "iter_states", type2scheme
+        (arrow (arrow (ty "state") tunit) tunit);
+    ];
+
+    moddecls = [];
+
+  }
+
+let moddecls =
+  if Settings.stepwise
+  then [querymoddef]
+  else []
 
 let typedefs =
   PreInterface.interface.typedecls @
@@ -137,7 +170,7 @@ let typedefs =
     [nonterminaltypedef; valuetypedef]
   else if Settings.stepwise then
     [ { typename = "semantic_value";
-        typerhs = TAbbrev (TypApp ("Obj.t", []));
+        typerhs = TAbbrev (ty "Obj.t");
         typeparams = []; typeconstraint = None; typeprivate = false } ]
   else
     []
@@ -154,7 +187,7 @@ let valdecls =
       let stepentryvaldecls =
         StringSet.fold (fun symbol decls ->
             (Misc.normalize symbol ^ "_state",
-             {quantifiers = []; body = TypApp ("state",[])}) :: decls
+             {quantifiers = []; body = ty "state"}) :: decls
           ) PreFront.grammar.start_symbols []
       in
       stepvaldecl @ stepentryvaldecls
@@ -164,7 +197,7 @@ let interface =
   { PreInterface.interface with
     typedecls = typedecls;
     valdecls = valdecls;
-    moddecls = [];
+    moddecls = moddecls;
   }
 
 (* Writing the interface to a file. *)

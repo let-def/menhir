@@ -91,6 +91,8 @@ module T = struct
     with Not_found ->
       assert false
 
+  let iter_states = Lr1.iter
+
   open MenhirLib.EngineTypes
 
   exception Accept of semantic_value
