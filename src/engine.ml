@@ -59,7 +59,7 @@ module Make (T : TABLE) = struct
      it is incremented. *)
 
   let discard env token : env' =
-    Log.lookahead_token 
+    Log.lookahead_token
       (fst3 token)
       (T.token2terminal (snd3 token))
       (thd3 token);
@@ -99,7 +99,7 @@ module Make (T : TABLE) = struct
   let rec run env : parser =
 
     (* Log the fact that we just entered this state. *)
-    
+
     let s = env.current in
     Log.state s;
 
@@ -373,7 +373,7 @@ module Make (T : TABLE) = struct
 	| Step s -> aux (step s)
 	| Accept v -> v
 	| Reject -> raise _eRR
-	| Feed f -> 
+	| Feed f ->
 	  let token = lexer lexbuf in
 	  let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
 	  aux (step (f (lex_start_p, token, lex_curr_p)))

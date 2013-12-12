@@ -926,7 +926,7 @@ let program = {
   postlogue =
     let tokenkind = if Settings.feed_nonterminal
       then "MenhirInterpreter.semantic_value"
-      else "token"
+      else jeton
     in
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
         \twith type token := " ^ tokenkind ^ "\n\
