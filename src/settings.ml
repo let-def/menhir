@@ -169,6 +169,9 @@ let typed_values =
 let feed_nonterminal =
   ref false
 
+let terminal_endpos =
+  ref false
+
 type suggestion =
   | SuggestNothing
   | SuggestCompFlags
@@ -224,6 +227,7 @@ let options = Arg.align [
   "--suggest-link-flags-opt", Arg.Unit (fun () -> suggestion := SuggestLinkFlags "cmx"),
                               " Suggest link flags for ocamlopt";
   "--table", Arg.Set table, " Use the table-based back-end";
+  "--terminal-endpos", Arg.Set terminal_endpos, " Correct $endpos for terminals.";
   "--timings", Arg.Set timings, " Display internal timings";
   "--trace", Arg.Set trace, " Include tracing instructions in the generated code";
   "--typed-values", Arg.Set typed_values, " Explicit typing of stack values";
@@ -382,9 +386,6 @@ let table =
   !table
 
 let stepwise =
-  if !stepwise then
-    if not table then
-      failwith "--stepwise requires --table backend";
   !stepwise
 
 let coq = 
@@ -403,14 +404,10 @@ let fixedexc =
   !fixedexc
 
 let typed_values =
-  (if !typed_values then
-     if not infer then 
-       failwith "--typed-values requires --infer flag.");
   !typed_values
 
 let feed_nonterminal =
-  (if !feed_nonterminal then
-     if not typed_values then
-       failwith "--feed-nonterminal requires --typed-values (and --infer).");
   !feed_nonterminal
 
+let terminal_endpos =
+  !terminal_endpos

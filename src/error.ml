@@ -124,3 +124,13 @@ let grammar_warning positions message =
   else
     warning positions message
 
+(* Check consistency of selected settings. *)
+
+let () =
+  if Settings.stepwise && not Settings.table then
+    error [] "--stepwise requires --table backend";
+  if Settings.typed_values && not Settings.infer then
+    error [] "--typed-values requires --infer flag.";
+  if Settings.feed_nonterminal && not Settings.typed_values then
+    error [] "--feed-nonterminal requires --typed-values (and --infer)."
+

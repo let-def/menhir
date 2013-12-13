@@ -194,16 +194,26 @@ let reducebody prod =
      production. *)
 
   let posbindings =
-    [
-      if length > 0 then
+    if length > 0 then
+      (* For nonterminals *)
+      [
         PTuple [PVar startp; PVar endp],
         ETuple [ EVar (Printf.sprintf "_startpos_%s_" ids.(0));
                  EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
-               ]
-      else
+               ];
+      ]
+    else if Settings.terminal_endpos then
+      (* For terminals, with different endpos *)
+      [
         PTuple [PVar startp; PWildcard; PVar endp],
-        ERecordAccess (EVar env, ftoken)
-    ]
+        ERecordAccess (EVar env, ftoken);
+      ]
+    else
+      [
+        PTuple [PVar startp; PWildcard; PWildcard],
+        ERecordAccess (EVar env, ftoken);
+        PVar endp, EVar startp;
+      ]
   in
 
   (* Is this is one of the start productions? *)

@@ -192,3 +192,9 @@ val typed_values: bool
  * errors. Error recovery is therefore delegated to external code *)
 
 val feed_nonterminal: bool
+
+(* This flag change the way endpos is computed for terminals:
+   menhir set $startpos = $endpos for terminals. When this flag is enabled,
+   $endpos is set to lex_curr_p. *)
+
+val terminal_endpos: bool
