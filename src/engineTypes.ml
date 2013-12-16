@@ -328,15 +328,17 @@ module type STEP_ENGINE = sig
   val initial: state -> parser
 
   val step: step -> parser
+end
 
-  module Query : sig
-    type terminal
-    val index: token -> terminal
-    val action: state -> terminal -> [`Shift | `Shift_and_discard | `Reduce | `Fail]
-    val default_reduction: state -> bool
-    val iter_states: (state -> unit) -> unit
-  end
+module type QUERY = sig
+  type token
+  type state
 
+  type terminal
+  val index: token -> terminal
+  val action: state -> terminal -> [`Shift | `Shift_and_discard | `Reduce | `Fail]
+  val default_reduction: state -> bool
+  val iter_states: (state -> unit) -> unit
 end
 
 (* This signature describes the LR engine. *)
@@ -346,6 +348,7 @@ module type ENGINE = sig
   type state
   type token
   type semantic_value
+  type terminal
 
   (* An entry point to the engine requires a start state, a lexer, and a lexing
      buffer. It either succeeds and produces a semantic value, or fails and
@@ -367,5 +370,10 @@ module type ENGINE = sig
     with type state := state
      and type token := token
      and type semantic_value := semantic_value
+
+  module Query : QUERY
+    with type state := state
+     and type token := token
+     and type terminal = terminal
 
 end

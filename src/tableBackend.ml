@@ -906,6 +906,25 @@ let api : IL.valdef list =
 
   ) Lr1.entry []
 
+let forward_references =
+  let pattern elt =
+    if Terminal.is_nt elt then
+      Some (PIntConst (Terminal.t2i elt))
+    else
+      None
+  and body elt =
+    match Terminal.as_nt elt with
+    | None -> EList []
+    | Some nt ->
+      let as_terminal nt = EIntConst (Terminal.t2i (Terminal.lookup_nt nt)) in
+      EList (List.map as_terminal (forward_references nt))
+  in
+  define (prefix "forward_references",
+	  EFun ([PVar "x"],
+		EMatch (EVar "x",
+			branchonterminal pattern body @
+			  [{branchpat = PWildcard; branchbody = EList []}])))
+
 (* ------------------------------------------------------------------------ *)
 
 (* Let's put everything together. *)
@@ -932,7 +951,7 @@ let program = {
     [ application ];
 
   valdefs =
-    api;
+    api @ [ forward_references ];
 
   postlogue =
     let tokenkind = if Settings.feed_nonterminal
@@ -940,11 +959,15 @@ let program = {
       else jeton
     in
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
-        \twith type token := " ^ tokenkind ^ "\n\
-        \tand type state = int\n\
-        \tand type semantic_value := MenhirInterpreter.semantic_value)" ] @
+	\twith type token := " ^ tokenkind ^ "\n\
+	\tand type state = int\n\
+	\tand type semantic_value := MenhirInterpreter.semantic_value)\n\n";
+      "module Query = struct\n\
+      \  include MenhirInterpreter.Query\n\
+      \  let forward_references = " ^ prefix "forward_references" ^ "\n\
+       end\n\n";
+    ] @
     Front.grammar.UnparameterizedSyntax.postludes
-
 }
 
 let () =

@@ -32,50 +32,50 @@ let ty n = TypApp (n,[])
 
 let steptypdefs =
   let tyenv = TypApp ("MenhirLib.EngineTypes.env",
-                      [ty "state"; ty "semantic_value"; ty tokenkind])
+	              [ty "state"; ty "semantic_value"; ty tokenkind])
   in
   [
     { typename = "state"; typerhs = TAbbrev (ty "int");
       typeparams = []; typeconstraint = None; typeprivate = true };
     { typename = "step"; typeprivate = true;
       typerhs = TDefSum [
-          { dataname = "Step_run";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-          { dataname = "Step_error";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-          { dataname = "Step_action";
-            datavalparams = [tyenv];
-            datatypeparams = None
-          };
-        ];
+	  { dataname = "Step_run";
+	    datavalparams = [tyenv];
+	    datatypeparams = None
+	  };
+	  { dataname = "Step_error";
+	    datavalparams = [tyenv];
+	    datatypeparams = None
+	  };
+	  { dataname = "Step_action";
+	    datavalparams = [tyenv];
+	    datatypeparams = None
+	  };
+	];
       typeparams = []; typeconstraint = None };
     { typename = "parser"; typeprivate = false;
       typerhs = TDefSum [
-          { dataname = "Step";
-            datavalparams = [ty "step"];
-            datatypeparams = None
-          };
-          { dataname = "Accept";
-            datavalparams = [ty "semantic_value"];
-            datatypeparams = None
-          };
-          { dataname = "Reject";
-            datavalparams = [];
-            datatypeparams = None
-          };
-          { dataname = "Feed";
-            datavalparams = [TypArrow (TypTuple [
-                ty "Lexing.position";
-                ty tokenkind;
-                ty "Lexing.position";
-              ], ty "step")];
-            datatypeparams = None
-          };
-        ];
+	  { dataname = "Step";
+	    datavalparams = [ty "step"];
+	    datatypeparams = None
+	  };
+	  { dataname = "Accept";
+	    datavalparams = [ty "semantic_value"];
+	    datatypeparams = None
+	  };
+	  { dataname = "Reject";
+	    datavalparams = [];
+	    datatypeparams = None
+	  };
+	  { dataname = "Feed";
+	    datavalparams = [TypArrow (TypTuple [
+	        ty "Lexing.position";
+	        ty tokenkind;
+	        ty "Lexing.position";
+	      ], ty "step")];
+	    datatypeparams = None
+	  };
+	];
       typeparams = []; typeconstraint = None };
   ]
 
@@ -95,18 +95,20 @@ let querymoddef =
 
     typedecls = [
       { typename = "terminal"; typerhs = TDefSum [];
-        typeparams = []; typeconstraint = None; typeprivate = false };
+	typeparams = []; typeconstraint = None; typeprivate = false };
     ];
 
     valdecls = [
       "index", type2scheme
-        (arrow (ty tokenkind) (ty "terminal"));
+	(arrow (ty tokenkind) (ty "terminal"));
       "action", type2scheme
-        (arrow (ty "state") (arrow (ty "terminal") (ty action_desc)));
+	(arrow (ty "state") (arrow (ty "terminal") (ty action_desc)));
       "default_reduction", type2scheme
-        (arrow (ty "state") (ty "bool"));
+	(arrow (ty "state") (ty "bool"));
       "iter_states", type2scheme
-        (arrow (arrow (ty "state") tunit) tunit);
+	(arrow (arrow (ty "state") tunit) tunit);
+      "forward_references", type2scheme
+	(arrow (ty "terminal") (TypApp ("list", [ty "terminal"])));
     ];
 
     moddecls = [];
@@ -123,55 +125,55 @@ let typedefs =
   if Settings.typed_values then
     let nonterminaltypedef =
       let add_nt sym ocamltype datadefs =
-        {
-          dataname = ntmangle sym;
-          datavalparams = [TypTextual ocamltype];
-          datatypeparams = None;
-        } :: datadefs
+	{
+	  dataname = ntmangle sym;
+	  datavalparams = [TypTextual ocamltype];
+	  datatypeparams = None;
+	} :: datadefs
       in
       let datadefs =
-        StringMap.fold add_nt
-          Front.grammar.UnparameterizedSyntax.types
-          []
+	StringMap.fold add_nt
+	  Front.grammar.UnparameterizedSyntax.types
+	  []
       in
       {
-        typename = "nonterminal";
-        typeparams = [];
-        typerhs = TDefSum datadefs;
-        typeconstraint = None;
-        typeprivate = false;
+	typename = "nonterminal";
+	typeparams = [];
+	typerhs = TDefSum datadefs;
+	typeconstraint = None;
+	typeprivate = false;
       }
     in
     let valuetypedef =
       {
-        typename = "semantic_value";
-        typeparams = [];
-        typerhs = TDefSum [
-            {
-              dataname = "Bottom";
-              datavalparams = [];
-              datatypeparams = None;
-            };
-            {
-              dataname = "Terminal";
-              datavalparams = [TypTextual (Stretch.Inferred "token")];
-              datatypeparams = None;
-            };
-            {
-              dataname = "Nonterminal";
-              datavalparams = [TypTextual (Stretch.Inferred "nonterminal")];
-              datatypeparams = None;
-            }
-          ];
-        typeconstraint = None;
-        typeprivate = false;
+	typename = "semantic_value";
+	typeparams = [];
+	typerhs = TDefSum [
+	    {
+	      dataname = "Bottom";
+	      datavalparams = [];
+	      datatypeparams = None;
+	    };
+	    {
+	      dataname = "Terminal";
+	      datavalparams = [TypTextual (Stretch.Inferred "token")];
+	      datatypeparams = None;
+	    };
+	    {
+	      dataname = "Nonterminal";
+	      datavalparams = [TypTextual (Stretch.Inferred "nonterminal")];
+	      datatypeparams = None;
+	    }
+	  ];
+	typeconstraint = None;
+	typeprivate = false;
       }
     in
     [nonterminaltypedef; valuetypedef]
   else if Settings.stepwise then
     [ { typename = "semantic_value";
-        typerhs = TAbbrev (ty "Obj.t");
-        typeparams = []; typeconstraint = None; typeprivate = false } ]
+	typerhs = TAbbrev (ty "Obj.t");
+	typeparams = []; typeconstraint = None; typeprivate = false } ]
   else
     []
 
@@ -185,10 +187,10 @@ let valdecls =
   PreInterface.interface.valdecls @
     if Settings.stepwise then
       let stepentryvaldecls =
-        StringSet.fold (fun symbol decls ->
-            (Misc.normalize symbol ^ "_state",
-             {quantifiers = []; body = ty "state"}) :: decls
-          ) PreFront.grammar.start_symbols []
+	StringSet.fold (fun symbol decls ->
+	    (Misc.normalize symbol ^ "_state",
+	     {quantifiers = []; body = ty "state"}) :: decls
+	  ) PreFront.grammar.start_symbols []
       in
       stepvaldecl @ stepentryvaldecls
     else []
