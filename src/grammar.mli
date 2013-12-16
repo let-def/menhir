@@ -117,8 +117,11 @@ module Terminal : sig
 
   val lookup_nt: Nonterminal.t -> t
 
-  (* [is_nt t] returns true iff [t] is terminal generated after a non-terminal. *)
-  val is_nt : t -> bool
+  (* [is_nt t] returns true iff [t] is a terminal generated after a non-terminal. *)
+  val is_nt: t -> bool
+
+  (* [as_nt t] returns [Some nt] iff [t] is a terminal generated after non-terminal [nt]. *)
+  val as_nt: t -> Nonterminal.t option
 
   (* Terminals can be converted to integers. This feature is exploited
      in the table-based back-end. *)
@@ -449,3 +452,4 @@ end
 
 val diagnostics: unit -> unit
 
+val forward_references : Nonterminal.t -> Nonterminal.t list

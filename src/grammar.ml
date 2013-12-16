@@ -780,6 +780,12 @@ let () =
     ) rhs
   ) Production.table
 
+let forward_references (nt : Nonterminal.t) : Nonterminal.t list =
+  NonterminalSet.fold
+    (fun nt' nts -> nt' :: nts)
+    forward.(nt)
+    []
+
 (* ------------------------------------------------------------------------ *)
 (* If requested, dump the forward reference graph. *)
 
