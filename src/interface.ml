@@ -42,8 +42,8 @@ let steptypdefs =
       "MenhirLib.EngineTypes.env"
   in
   [
-    { typename = "state"; typeprivate = false;
-      typerhs = TDefSum [];
+    { typename = "state"; typeprivate = true;
+      typerhs = TAbbrev (ty "int");
       typeparams = []; typeconstraint = None };
     { typename = "feed"; typeprivate = false;
       typerhs = TAbbrev (ty "[ `Feed | `Feed_error ]");
