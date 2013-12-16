@@ -106,6 +106,8 @@ let querymoddef =
         (arrow (ty "state") (ty "bool"));
       "iter_states", type2scheme
         (arrow (arrow (ty "state") tunit) tunit);
+      "forward_references", type2scheme
+        (arrow (ty "terminal") (ty ~p:[ty "terminal"] "list"));
     ];
 
     moddecls = [];
