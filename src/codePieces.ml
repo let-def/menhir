@@ -181,10 +181,12 @@ let tokspat toks =
 let branchonterminal pat branch =
   Terminal.fold (fun tok branches ->
       if Terminal.pseudo tok then
-        branches
-      else
-        { branchpat = pat tok;
-          branchbody = branch tok } :: branches
+	branches
+      else match pat tok with
+	| None -> branches
+	| Some pat ->
+		{ branchpat = pat;
+		  branchbody = branch tok } :: branches
     ) []
 
 (* [destructuretokendef name codomain bindsemv branch] generates the

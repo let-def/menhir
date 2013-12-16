@@ -141,7 +141,7 @@ let reducecellcasts prod i symbol casts =
 	) :: casts
       else
 	(* Project: [let id = (match id with Nonterminal (NT'... id) -> id
-                                           | _ -> assert false)] *)
+			                   | _ -> assert false)] *)
 	let kind, cstr, has_value = match symbol with
 	  | Symbol.T t when Terminal.is_nt t -> "Nonterminal",
 			  Terminal.print t, true
@@ -155,9 +155,9 @@ let reducecellcasts prod i symbol casts =
 	    PVar id,
 	    EMatch (EVar id, [
 	      { branchpat = PData (kind, [PData (cstr, [PVar id])]);
-	        branchbody = EVar id};
+		branchbody = EVar id};
 	      { branchpat = PWildcard;
-	        branchbody = EApp (EVar "assert", [EVar "false"]) };
+		branchbody = EApp (EVar "assert", [EVar "false"]) };
 	    ])
 	  )
 	 else (PVar id, EUnit)
@@ -197,22 +197,22 @@ let reducebody prod =
     if length > 0 then
       (* For nonterminals *)
       [
-        PTuple [PVar startp; PVar endp],
-        ETuple [ EVar (Printf.sprintf "_startpos_%s_" ids.(0));
-                 EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
-               ];
+	PTuple [PVar startp; PVar endp],
+	ETuple [ EVar (Printf.sprintf "_startpos_%s_" ids.(0));
+		 EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
+	       ];
       ]
     else if Settings.terminal_endpos then
       (* For terminals, with different endpos *)
       [
-        PTuple [PVar startp; PWildcard; PVar endp],
-        ERecordAccess (EVar env, ftoken);
+	PTuple [PVar startp; PWildcard; PVar endp],
+	ERecordAccess (EVar env, ftoken);
       ]
     else
       [
-        PTuple [PVar startp; PWildcard; PWildcard],
-        ERecordAccess (EVar env, ftoken);
-        PVar endp, EVar startp;
+	PTuple [PVar startp; PWildcard; PWildcard],
+	ERecordAccess (EVar env, ftoken);
+	PVar endp, EVar startp;
       ]
   in
 
@@ -224,8 +224,8 @@ let reducebody prod =
       (* This is a start production. Raise [Accept]. *)
 
       EComment (
-        sprintf "Accepting %s" (Nonterminal.print false nt),
-        blet (
+	sprintf "Accepting %s" (Nonterminal.print false nt),
+	blet (
 	  [ pat, EVar stack ],
 	  ERaise (EData (accept, [ EVar ids.(0) ]))
 	)
@@ -248,12 +248,12 @@ let reducebody prod =
 	  let cstr =
 	    ntmangle (Nonterminal.print true (Production.nt prod))
 	  in
-          EData ("Nonterminal", [EData (cstr, [EVar semv])])
+	  EData ("Nonterminal", [EData (cstr, [EVar semv])])
       in
 
       EComment (
-        Production.print prod,
-        blet (
+	Production.print prod,
+	blet (
 	  (pat, EVar stack) ::                  (* destructure the stack *)
 	  casts @                               (* perform type casts *)
 	  posbindings @                         (* bind [startp] and [endp] *)
@@ -671,11 +671,11 @@ let token2terminal =
 	else
 	  "Terminal"
       in
-      PData (kind, [tokpat elt])
+      Some (PData (kind, [tokpat elt]))
     in
     let cases =
       { branchpat = PData ("Bottom", []);
-        branchbody = EVar "error_terminal";
+	branchbody = EVar "error_terminal";
       } ::
       branchonterminal pattern body
     in
@@ -889,9 +889,9 @@ let api : IL.valdef list =
 	  project (
 	    EApp (
 	      EVar entry, [
-	        EIntConst (Lr1.number state);
-	        EVar lexer;
-	        EVar lexbuf
+		EIntConst (Lr1.number state);
+		EVar lexer;
+		EVar lexbuf
 	      ]
 	    )
 	  )
