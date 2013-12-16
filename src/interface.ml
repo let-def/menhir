@@ -35,8 +35,8 @@ let steptypdefs =
                       [ty "state"; ty "semantic_value"; ty tokenkind])
   in
   [
-    { typename = "state"; typerhs = TDefSum [];
-      typeparams = []; typeconstraint = None; typeprivate = false };
+    { typename = "state"; typerhs = TAbbrev (ty "int");
+      typeparams = []; typeconstraint = None; typeprivate = true };
     { typename = "step"; typeprivate = true;
       typerhs = TDefSum [
           { dataname = "Step_run";
