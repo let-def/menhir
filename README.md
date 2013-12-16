@@ -16,19 +16,16 @@ partial-order
 
 *STATUS:* Done, fully working, need documentation.
 
-Yacc commands to introduce precedences to tokens (```%nonassoc```, ```%left``` and ```%right```) impose a total-ordering.
-
-This defines a somewhat arbitrary order over otherwise unrelated tokens, thereby forcing you to overspecify the grammar.
-
-This branch has a new command, ```%priorities```, which allows to specify a partial ordering over tokens.
-
-Usage:
+Yacc commands to introduce precedence (```%nonassoc```, ```%left``` and ```%right```) impose a total-ordering.  
+This defines a somewhat arbitrary order over otherwise unrelated tokens, thereby forcing you to overspecify the grammar.  
+The new command ```%priorities``` can be used to specify a partial ordering over tokens.
 
     %priorities PLUS MINUS MULT DIV UMINUS
 
-Means ```PLUS < MINUS < MULT < DIV < UMINUS```, and nothing more.  
+Means that ```PLUS < MINUS < MULT < DIV < UMINUS```, and nothing more.  
+Tokens not specified in a %priorities declaration will keep the usual Yacc ordering.
+
 Cycles are rejected.  
-Tokens not specified in a %priorities declaration will keep the usual Yacc ordering.  
 Warning about unused precedence declaration are not emitted for partially-ordered tokens.
 
 
@@ -42,7 +39,7 @@ Extensions apply only to ```--table``` backend.
 ### Inversion of control / step-by-step interface
 
 Flag: ```--stepwise```.  
-Rather than having the parser invoke the lexer, the parser exposes a step function you feed with token. 
+Rather than having the parser invokes the lexer, the parser exposes a step function getting a token. 
 
 ### Functional interface
 
@@ -52,7 +49,7 @@ The parser state is a purely functional data structure: you can keep previous st
 ### Stack introspection
 
 Flag: ```--typed-values```.  
-Frames of the parser stack are typed and accessible -- you can read already reduced values and shifted tokens.
+Frames of the parser stack are typed and accessible. You can read reduced values and shifted tokens.
 
 ### Feed non-terminal
 
