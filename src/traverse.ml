@@ -44,6 +44,7 @@ class virtual ['env] env = object(self)
 
   method pat env = function
     | PWildcard
+    | PIntConst _
     | PUnit ->
         env
     | PVar id ->
@@ -128,6 +129,8 @@ class virtual ['env] map = object (self)
           self#ecomment env s e
       | EPatComment (s, p, e) ->
           self#epatcomment env s p e
+      | EList es ->
+          self#elist env es
       | EArray es ->
           self#earray env es
       | EArrayAccess (e, i) ->
@@ -269,6 +272,13 @@ class virtual ['env] map = object (self)
       raise NoChange
     else
       ERecordWrite (e', f, e1')
+
+  method elist env es =
+    let es' = self#exprs env es in
+    if es == es' then
+      raise NoChange
+    else
+      EList es'
 
   method earray env es =
     let es' = self#exprs env es in
@@ -413,6 +423,8 @@ class virtual ['env, 'a] fold = object (self)
         self#ecomment env accu s e
     | EPatComment (s, p, e) ->
         self#epatcomment env accu s p e
+    | EList es ->
+        self#elist env accu es
     | EArray es ->
         self#earray env accu es
     | EArrayAccess (e, i) ->
@@ -503,6 +515,10 @@ class virtual ['env, 'a] fold = object (self)
   method erecordwrite (env : 'env) (accu : 'a) e f e1 =
     let accu = self#expr env accu e in
     let accu = self#expr env accu e1 in
+    accu
+
+  method elist (env : 'env) (accu : 'a) es =
+    let accu = self#exprs env accu es in
     accu
 
   method earray (env : 'env) (accu : 'a) es =
