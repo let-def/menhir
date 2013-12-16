@@ -273,6 +273,7 @@ let rec member e k =
   | EStringConst _
   | EUnit
   | EArray _
+  | EList _
   | EArrayAccess (_, _) ->
       true
 
@@ -381,6 +382,8 @@ and exprk k f e =
 	fprintf f "%a.%s" atom e field
     | ERecord fs ->
 	fprintf f "{%a}" (indent 2 (list field nothing)) fs
+    | EList fs ->
+	fprintf f "[%a]" (indent 2 (list array_field nothing)) fs
     | EArray fs ->
 	fprintf f "[|%a|]" (indent 2 (list array_field nothing)) fs
     | EArrayAccess (e, i) ->
@@ -436,6 +439,8 @@ and pat0 f = function
       var f x
   | PData (d, []) ->
       var f d
+  | PIntConst d ->
+      fprintf f "%d" d
   | PTuple [] ->
       assert false
   | PTuple [ p ] ->

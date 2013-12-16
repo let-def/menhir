@@ -232,6 +232,9 @@ and expr =
   | EComment of string * expr
   | EPatComment of string * pattern * expr
 
+  (* Lists. *)
+  | EList of expr list
+
   (* Arrays. *)
   | EArray of expr list
   | EArrayAccess of expr * expr
@@ -260,6 +263,7 @@ and pattern =
   | PData of string * pattern list
   | PTuple of pattern list
   | PRecord of (string * pattern) list
+  | PIntConst of int
 
   (* Disjunction. *)
   | POr of pattern list
