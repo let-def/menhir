@@ -428,8 +428,8 @@ module Make (T : TABLE) = struct
 
     let action state term =
       T.action state term ()
-        (fun () discard _term () _state ->
-           if discard then `Shift_and_discard else `Shift)
+        (fun () discard _term () state ->
+           `Shift ((if discard then `Discard else `Keep), state))
         (fun () _prod -> `Reduce)
         (fun () -> `Fail)
         ()

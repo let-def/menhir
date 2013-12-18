@@ -86,7 +86,7 @@ let stepvaldecl =
   ]
 
 let querymoddef =
-  let action_desc = "[`Shift | `Shift_and_discard | `Reduce | `Fail]" in
+  let action_desc = "[`Shift of [`Discard | `Keep] * state | `Reduce | `Fail]" in
   "Query", {
 
     paramdecls = [];
