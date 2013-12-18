@@ -339,7 +339,7 @@ module type QUERY = sig
 
   type terminal
   val index: token -> terminal
-  val action: state -> terminal -> [`Shift | `Shift_and_discard | `Reduce | `Fail]
+  val action: state -> terminal -> [`Shift of [`Discard | `Keep] * state | `Reduce | `Fail]
   val default_reduction: state -> bool
   val iter_states: (state -> unit) -> unit
 end
