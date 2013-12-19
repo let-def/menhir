@@ -23,66 +23,60 @@ include PreInterface
 
 (* Definitions to be exported for step-by-step engine interface. *)
 
+let ty ?(p=[]) n = TypApp (n,p)
+
 let tokenkind =
   if Settings.feed_nonterminal
   then "semantic_value"
   else "token"
 
-let ty n = TypApp (n,[])
+let tytokentuple =
+  TypTuple [
+    ty "Lexing.position";
+    ty tokenkind;
+    ty "Lexing.position";
+  ]
 
 let steptypdefs =
-  let tyenv = TypApp ("MenhirLib.EngineTypes.env",
-	              [ty "state"; ty "semantic_value"; ty tokenkind])
+  let tyenv = ty ~p:[ty "state"; ty "semantic_value"; ty tokenkind]
+      "MenhirLib.EngineTypes.env"
   in
   [
     { typename = "state"; typerhs = TAbbrev (ty "int");
       typeparams = []; typeconstraint = None; typeprivate = true };
-    { typename = "step"; typeprivate = true;
-      typerhs = TDefSum [
-	  { dataname = "Step_run";
-	    datavalparams = [tyenv];
-	    datatypeparams = None
-	  };
-	  { dataname = "Step_error";
-	    datavalparams = [tyenv];
-	    datatypeparams = None
-	  };
-	  { dataname = "Step_action";
-	    datavalparams = [tyenv];
-	    datatypeparams = None
-	  };
-	];
+    { typename = "feed"; typeprivate = false;
+      typerhs = TAbbrev (ty "[ `Feed | `Feed_error ]");
+      typeparams = []; typeconstraint = None };
+    { typename = "step"; typeprivate = false;
+      typerhs = TAbbrev (ty "[ `Step_run | `Step_error | `Step_action ]");
       typeparams = []; typeconstraint = None };
     { typename = "parser"; typeprivate = false;
-      typerhs = TDefSum [
-	  { dataname = "Step";
-	    datavalparams = [ty "step"];
-	    datatypeparams = None
+      typerhs = TDefRecord [
+	  { modifiable = false;
+	    fieldname = "env";
+	    fieldtype = type2scheme tyenv;
 	  };
-	  { dataname = "Accept";
-	    datavalparams = [ty "semantic_value"];
-	    datatypeparams = None
-	  };
-	  { dataname = "Reject";
-	    datavalparams = [];
-	    datatypeparams = None
-	  };
-	  { dataname = "Feed";
-	    datavalparams = [TypArrow (TypTuple [
-	        ty "Lexing.position";
-	        ty tokenkind;
-	        ty "Lexing.position";
-	      ], ty "step")];
-	    datatypeparams = None
+	  { modifiable = false;
+	    fieldname = "tag";
+	    fieldtype = type2scheme (TypVar "a");
 	  };
 	];
-      typeparams = []; typeconstraint = None };
+      typeparams = ["a"]; typeconstraint = None };
   ]
 
 let stepvaldecl =
-  [
-    "initial", { quantifiers = []; body = arrow (ty "state") (ty "parser") };
-    "step",    { quantifiers = []; body = arrow (ty "step") (ty "parser") };
+  let result =
+    "  [ `Step of step parser\n\
+    \  | `Feed of feed parser\n\
+    \  | `Accept of semantic_value\n\
+    \  | `Reject ]"
+  in
+  [ 
+    "initial", { quantifiers = []; 
+		 body = arrow (ty "state") 
+			  (arrow tytokentuple (ty ~p:[ty "step"] "parser")) };
+    "step",    { quantifiers = [];
+		 body = arrow (ty ~p:[ty "step"] "parser") (ty result) };
   ]
 
 let querymoddef =
@@ -108,7 +102,7 @@ let querymoddef =
       "iter_states", type2scheme
 	(arrow (arrow (ty "state") tunit) tunit);
       "forward_references", type2scheme
-	(arrow (ty "terminal") (TypApp ("list", [ty "terminal"])));
+	(arrow (ty "terminal") (ty ~p:[ty "terminal"] "list"));
     ];
 
     moddecls = [];
