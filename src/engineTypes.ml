@@ -310,21 +310,20 @@ module type STEP_ENGINE = sig
   type token
   type semantic_value
 
-  type step = private
-    | Step_run    of (state, semantic_value, token) env
-    | Step_error  of (state, semantic_value, token) env
-    | Step_action of (state, semantic_value, token) env
+  type feed = [ `Feed | `Feed_error ]
+  type step = [ `Step_run | `Step_error | `Step_action ]
 
-  type parser =
-    | Step   of step
-    | Accept of semantic_value
-    | Reject
-    | Feed   of (Lexing.position * token * Lexing.position -> step)
+  type 'a parser = { env: (state, semantic_value, token) env; tag: 'a }
 
-  val initial: state -> parser
+  val initial: state -> Lexing.position * token * Lexing.position -> step parser
 
-  val step: step -> parser
+  val step: step parser ->
+    [ `Step of step parser
+    | `Feed of feed parser
+    | `Accept of semantic_value
+    | `Reject ]
 
+  val feed : Lexing.position * token * Lexing.position -> feed parser -> step parser
 end
 
 (* This signature describes the LR engine. *)
