@@ -143,12 +143,18 @@ let reducecellcasts prod i symbol casts =
 	(* Project: [let id = (match id with Nonterminal (NT'... id) -> id
 			                   | _ -> assert false)] *)
 	let kind, cstr, has_value = match symbol with
-	  | Symbol.T t when Terminal.is_nt t -> "Nonterminal",
-			  Terminal.print t, true
-	  | Symbol.T t -> "Terminal",
-			  Terminal.print t, (Terminal.ocamltype t <> None)
-	  | Symbol.N n -> "Nonterminal",
-			  ntmangle (Nonterminal.print true n), true
+   | Symbol.T t when Terminal.is_nt t ->
+     "Nonterminal",
+     Terminal.print t,
+     true
+   | Symbol.T t ->
+     "Terminal",
+     TokenType.tokenprefix (Terminal.print t),
+     (Terminal.ocamltype t <> None)
+   | Symbol.N n ->
+     "Nonterminal",
+     ntmangle (Nonterminal.print true n),
+     true
 	in
 	(if has_value then
 	  (
