@@ -327,7 +327,7 @@ module type STEP_ENGINE = sig
     | `Accept of semantic_value
     | `Reject ]
 
-  val feed : Lexing.position * token * Lexing.position -> feed parser -> step parser
+  val feed : feed parser -> Lexing.position * token * Lexing.position -> step parser
 end
 
 module type QUERY = sig

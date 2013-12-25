@@ -347,7 +347,7 @@ module Make (T : TABLE) = struct
     with T.Accept v -> `Accept v
        | Error      -> `Reject
 
-  let feed token s =
+  let feed s token =
     match s.tag with
     | `Feed -> 
       { env = discard s.env token; tag = `Step_run }
@@ -431,7 +431,7 @@ module Make (T : TABLE) = struct
 	| `Feed p -> 
 	  let token = lexer lexbuf in
 	  let { Lexing.lex_start_p; lex_curr_p } = lexbuf in
-	  aux (step (feed (lex_start_p, token, lex_curr_p) p))
+	  aux (step (feed p (lex_start_p, token, lex_curr_p)))
       in
       aux (run env)
 

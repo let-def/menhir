@@ -77,6 +77,9 @@ let stepvaldecl =
 			  (arrow tytokentuple (ty ~p:[ty "step"] "parser")) };
     "step",    { quantifiers = [];
 		 body = arrow (ty ~p:[ty "step"] "parser") (ty result) };
+    "feed",    { quantifiers = [];
+		 body = arrow (ty ~p:[ty "feed"] "parser")
+			  (arrow tytokentuple (ty ~p:[ty "step"] "parser")) };
   ]
 
 let querymoddef =
@@ -88,8 +91,8 @@ let querymoddef =
     excdecls = [];
 
     typedecls = [
-      { typename = "terminal"; typerhs = TDefSum [];
-	typeparams = []; typeconstraint = None; typeprivate = false };
+      { typename = "terminal"; typerhs = TAbbrev (ty "int");
+	typeparams = []; typeconstraint = None; typeprivate = true };
     ];
 
     valdecls = [
