@@ -343,7 +343,7 @@ module Make (T : TABLE) = struct
       match s.tag with
       | `Step_run    -> run s.env
       | `Step_action -> action s.env
-      | `Step_error  -> initiate s.env
+      | `Step_error  -> error s.env
     with T.Accept v -> `Accept v
        | Error      -> `Reject
 
