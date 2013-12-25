@@ -27,18 +27,18 @@ let ty ?(p=[]) n = TypApp (n,p)
 
 let tokenkind =
   if Settings.feed_nonterminal
-  then "semantic_value"
-  else "token"
+  then ty "semantic_value"
+  else TokenType.ttoken
 
 let tytokentuple =
   TypTuple [
     ty "Lexing.position";
-    ty tokenkind;
+    tokenkind;
     ty "Lexing.position";
   ]
 
 let steptypdefs =
-  let tyenv = ty ~p:[ty "state"; ty "semantic_value"; ty tokenkind]
+  let tyenv = ty ~p:[ty "state"; ty "semantic_value"; tokenkind]
       "MenhirLib.EngineTypes.env"
   in
   [
@@ -78,7 +78,7 @@ let stepvaldecl =
     "step",    { quantifiers = [];
 		 body = arrow (ty ~p:[ty "step"] "parser") (ty result) };
     "feed",    { quantifiers = [];
-		 body = arrow (ty ~p:[ty "feed"] "parser")
+		 body = arrow (ty ~p:[ty "feed"] "parser") 
 			  (arrow tytokentuple (ty ~p:[ty "step"] "parser")) };
   ]
 
@@ -97,7 +97,7 @@ let querymoddef =
 
     valdecls = [
       "index", type2scheme
-	(arrow (ty tokenkind) (ty "terminal"));
+	(arrow tokenkind (ty "terminal"));
       "action", type2scheme
 	(arrow (ty "state") (arrow (ty "terminal") (ty action_desc)));
       "default_reduction", type2scheme
@@ -153,12 +153,12 @@ let typedefs =
 	    };
 	    {
 	      dataname = "Terminal";
-	      datavalparams = [TypTextual (Stretch.Inferred "token")];
+	      datavalparams = [tokenkind];
 	      datatypeparams = None;
 	    };
 	    {
 	      dataname = "Nonterminal";
-	      datavalparams = [TypTextual (Stretch.Inferred "nonterminal")];
+	      datavalparams = [ty "nonterminal"];
 	      datatypeparams = None;
 	    }
 	  ];
