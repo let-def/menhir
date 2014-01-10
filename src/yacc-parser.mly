@@ -26,9 +26,9 @@ open Positions
 
 %}
 
-%token TOKEN TYPE LEFT RIGHT NONASSOC START PREC PUBLIC COLON BAR EOF EQUAL 
+%token TOKEN TYPE LEFT RIGHT NONASSOC START PREC PUBLIC COLON BAR EOF EQUAL
 %token INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
-%token <string Positions.located> LID UID 
+%token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
 %token <string Lazy.t> PERCENTPERCENT
@@ -54,12 +54,12 @@ open Positions
 
 grammar:
   declarations PERCENTPERCENT rules trailer
-    { 
-      { 
-	pg_filename          = ""; (* filled in by the caller *)
-	pg_declarations      = List.rev $1;
-	pg_rules	     = $3;
-	pg_trailer           = $4 
+    {
+      {
+        pg_filename          = ""; (* filled in by the caller *)
+        pg_declarations      = List.rev $1;
+        pg_rules	     = $3;
+        pg_trailer           = $4
       }
     }
 
@@ -95,7 +95,7 @@ declaration:
 
 | START OCAMLTYPE nonterminals
     /* %start <ocamltype> foo is syntactic sugar for %start foo %type <ocamltype> foo */
-    { Misc.mapd (fun ntloc -> 
+    { Misc.mapd (fun ntloc ->
         Positions.mapd (fun nt -> DStart nt, DType ($2, ParameterVar ntloc)) ntloc) $3 }
 
 | priority_keyword symbols
@@ -178,14 +178,14 @@ rule:
   optional_formal_parameters
   COLON optional_bar
   production_group production_groups
-    { 
+    {
       let public, inline = $1 in
-      { pr_public_flag = public; 
-	pr_inline_flag = inline;
-	pr_nt          = Positions.value $2;
-	pr_positions   = [ Positions.position $2 ];
-	pr_parameters  = $3;
-	pr_branches    = List.flatten ($6 :: List.rev $7)
+      { pr_public_flag = public;
+        pr_inline_flag = inline;
+        pr_nt          = Positions.value $2;
+        pr_positions   = [ Positions.position $2 ];
+        pr_parameters  = $3;
+        pr_branches    = List.flatten ($6 :: List.rev $7)
       }
     }
 
@@ -226,7 +226,7 @@ optional_actual_parameters:
     { $2 }
 
 actual_parameters_comma:
-  actual_parameter 
+  actual_parameter
     { [ $1 ] }
 | actual_parameter COMMA actual_parameters_comma
     { $1 :: $3 }
@@ -277,19 +277,19 @@ production_groups:
 
 production_group:
   productions ACTION /* action is lexically delimited by braces */ optional_precedence
-    { 
+    {
       let productions, action, oprec2 = $1, $2, $3 in
 
       ParserAux.check_production_group
-	productions
-	(rhs_start_pos 2) (rhs_end_pos 2) action;
+        productions
+        (rhs_start_pos 2) (rhs_end_pos 2) action;
 
       List.map (fun (producers, oprec1, rprec, pos) -> {
-	pr_producers                = producers;
-	pr_action                   = action;
-	pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
-	pr_branch_reduce_precedence = rprec;
-	pr_branch_position          = pos
+        pr_producers                = producers;
+        pr_action                   = action;
+        pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
+        pr_branch_reduce_precedence = rprec;
+        pr_branch_position          = pos
       }) productions
     }
 
@@ -325,7 +325,7 @@ production:
     }
 
 producers:
-  /* epsilon */ 
+  /* epsilon */
     { [] }
 | producers producer
     { $2 :: $1 }

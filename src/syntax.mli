@@ -20,15 +20,15 @@ type terminal =
     string
 
 type nonterminal =
-    string 
+    string
 
 type symbol =
-    string 
+    string
 
-type identifier = 
-    string 
+type identifier =
+    string
 
-type filename = 
+type filename =
     string
 
 (* A trailer is also a source file fragment. It is represented
@@ -42,36 +42,36 @@ type trailer =
 type action =
     Action.t
 
-type token_associativity = 
-    LeftAssoc 
+type token_associativity =
+    LeftAssoc
   | RightAssoc
   | NonAssoc
   | UndefinedAssoc
 
-type precedence_level = 
-    UndefinedPrecedence 
+type precedence_level =
+    UndefinedPrecedence
 
   (* Items are incomparable when they originate in different files. A
      brand of type [Mark.t] is used to record an item's origin. The
      positions allow locating certain warnings. *)
 
   | PrecedenceLevel of Mark.t * int * Lexing.position * Lexing.position
-                                    
+
 type token_properties =
     {
-	       tk_filename      : filename;
-	       tk_ocamltype     : Stretch.ocamltype option;
-	       tk_position	: Positions.t;
+               tk_filename      : filename;
+               tk_ocamltype     : Stretch.ocamltype option;
+               tk_position	: Positions.t;
       mutable  tk_associativity : token_associativity;
       mutable  tk_priority      : precedence_level; (* TEMPORARY terminologie toujours pas coherente *)
-      mutable  tk_is_declared   : bool; 
+      mutable  tk_is_declared   : bool;
     }
 
-type parameter = 
+type parameter =
   | ParameterVar of symbol Positions.located
   | ParameterApp of symbol Positions.located * parameters
 
-and parameters = 
+and parameters =
     parameter list
 
 type declaration =
@@ -90,7 +90,7 @@ type declaration =
 
     (* Start symbol declaration. *)
 
-  | DStart of nonterminal 
+  | DStart of nonterminal
 
     (* Priority and associativity declaration. *)
 
@@ -110,10 +110,10 @@ type producer =
     identifier Positions.located option * parameter
 
 type parameterized_branch =
-    { 
+    {
       pr_branch_position	   : Positions.t;
       pr_producers		   : producer list;
-      pr_action			   : action; 
+      pr_action			   : action;
       pr_branch_shift_precedence   : branch_shift_precedence;
       pr_branch_reduce_precedence  : branch_reduce_precedence
     }

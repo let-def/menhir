@@ -69,36 +69,36 @@ let actiondef grammar symbol branch =
   let _, formals =
     List.fold_left (fun (i, formals) (symbol, ido) ->
       let id, startp, endp, starto, endo =
-	match ido with
-	| None ->
-	    (* Symbols for which no name was chosen will be represented
-	       by variables named _1, _2, etc. *)
-	    Printf.sprintf "_%d" (i + 1),
-	    Printf.sprintf "_startpos__%d_" (i + 1),
-	    Printf.sprintf "_endpos__%d_" (i + 1),
-	    Printf.sprintf "_startofs__%d_" (i + 1),
-	    Printf.sprintf "_endofs__%d_" (i + 1)
+        match ido with
+        | None ->
+            (* Symbols for which no name was chosen will be represented
+               by variables named _1, _2, etc. *)
+            Printf.sprintf "_%d" (i + 1),
+            Printf.sprintf "_startpos__%d_" (i + 1),
+            Printf.sprintf "_endpos__%d_" (i + 1),
+            Printf.sprintf "_startofs__%d_" (i + 1),
+            Printf.sprintf "_endofs__%d_" (i + 1)
         | Some id ->
-	    (* Symbols for which a name was explicitly chosen will be
-	       known by that name in semantic actions. *)
-	    id,
-	    Printf.sprintf "_startpos_%s_" id,
-	    Printf.sprintf "_endpos_%s_" id,
-	    Printf.sprintf "_startofs_%s_" id,
-	    Printf.sprintf "_endofs_%s_" id
+            (* Symbols for which a name was explicitly chosen will be
+               known by that name in semantic actions. *)
+            id,
+            Printf.sprintf "_startpos_%s_" id,
+            Printf.sprintf "_endpos_%s_" id,
+            Printf.sprintf "_startofs_%s_" id,
+            Printf.sprintf "_endofs_%s_" id
       in
       let t =
-	try
-	  let props = StringMap.find symbol grammar.tokens in
-	  (* Symbol is a terminal. *)
-	  match props.tk_ocamltype with
-	  | None ->
-	      tunit
-	  | Some ocamltype ->
-	      TypTextual ocamltype
-	with Not_found ->
-	  (* Symbol is a nonterminal. *)
-	  nttype grammar symbol
+        try
+          let props = StringMap.find symbol grammar.tokens in
+          (* Symbol is a terminal. *)
+          match props.tk_ocamltype with
+          | None ->
+              tunit
+          | Some ocamltype ->
+              TypTextual ocamltype
+        with Not_found ->
+          (* Symbol is a nonterminal. *)
+          nttype grammar symbol
       in
       i + 1,
       PAnnot (PVar id, t) ::
@@ -147,13 +147,13 @@ let program grammar =
      productions that derive from the standard library are reflected
      first, so that type errors are not reported in them. *)
 
-  let bindings1, bindings2 = 
+  let bindings1, bindings2 =
     StringMap.fold (fun symbol rule (bindings1, bindings2) ->
       List.fold_left (fun (bindings1, bindings2) branch ->
-	if is_standard branch then
-	  (PWildcard, actiondef grammar symbol branch) :: bindings1, bindings2
-	else
-	  bindings1, (PWildcard, actiondef grammar symbol branch) :: bindings2
+        if is_standard branch then
+          (PWildcard, actiondef grammar symbol branch) :: bindings1, bindings2
+        else
+          bindings1, (PWildcard, actiondef grammar symbol branch) :: bindings2
       ) (bindings1, bindings2) rule.branches
     ) grammar.rules ([], [])
   in
@@ -293,37 +293,37 @@ let depend grammar =
 
       let lexbuf = Lexing.from_string output in
       let lines : line list =
-	try
-	  Lexdep.main lexbuf
-	with Lexdep.Error msg ->
-	  (* Echo the error message, followed with ocamldep's output. *)
-	  Error.error [] (msg ^ output)
+        try
+          Lexdep.main lexbuf
+        with Lexdep.Error msg ->
+          (* Echo the error message, followed with ocamldep's output. *)
+          Error.error [] (msg ^ output)
       in
 
       (* Look for the line that concerns the [.cmo] target, and echo a
-	 modified version of this line, where the [.cmo] target is
-	 replaced with [.ml] and [.mli] targets, and where the dependency
-	 over the [.cmi] file is dropped.
+         modified version of this line, where the [.cmo] target is
+         replaced with [.ml] and [.mli] targets, and where the dependency
+         over the [.cmi] file is dropped.
 
-	 In doing so, we assume that the user's [Makefile] supports
-	 bytecode compilation, so that it makes sense to request [bar.cmo]
-	 to be built, as opposed to [bar.cmx]. This is not optimal, but
-	 will do. [camldep] exhibits the same behavior. *)
+         In doing so, we assume that the user's [Makefile] supports
+         bytecode compilation, so that it makes sense to request [bar.cmo]
+         to be built, as opposed to [bar.cmx]. This is not optimal, but
+         will do. [camldep] exhibits the same behavior. *)
 
       (* TEMPORARY allow ocamldep to be called with flag -native. *)
 
       List.iter (fun ((_, target_filename), dependencies) ->
-	if Filename.check_suffix target_filename ".cmo" then
-	  let dependencies = List.filter (fun (basename, _) ->
-	    basename <> base
-	  ) dependencies in
-	  if List.length dependencies > 0 then begin
-	    Printf.printf "%s.ml %s.mli:" base base;
-	    List.iter (fun (basename, filename) ->
-	      Printf.printf " %s" filename
-	    ) dependencies;
-	    Printf.printf "\n%!"
-	  end
+        if Filename.check_suffix target_filename ".cmo" then
+          let dependencies = List.filter (fun (basename, _) ->
+            basename <> base
+          ) dependencies in
+          if List.length dependencies > 0 then begin
+            Printf.printf "%s.ml %s.mli:" base base;
+            List.iter (fun (basename, filename) ->
+              Printf.printf " %s" filename
+            ) dependencies;
+            Printf.printf "\n%!"
+          end
       ) lines
 
   end;
@@ -363,17 +363,17 @@ let infer grammar =
   let types =
     StringMap.fold (fun symbol _ types ->
       let ocamltype =
-	try
-	  List.assoc (Misc.normalize symbol) env
-	with Not_found ->
-	  assert false
+        try
+          List.assoc (Misc.normalize symbol) env
+        with Not_found ->
+          assert false
       in
       if StringMap.mem symbol grammar.types then
-	(* If there was a declared type, keep it. *)
-	types
+        (* If there was a declared type, keep it. *)
+        types
       else
-	(* Otherwise, insert the inferred type. *)
-	StringMap.add symbol ocamltype types
+        (* Otherwise, insert the inferred type. *)
+        StringMap.add symbol ocamltype types
     ) grammar.rules grammar.types
   in
 

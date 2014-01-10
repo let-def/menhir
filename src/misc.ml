@@ -66,9 +66,9 @@ let tabulateo number fold n f =
       let image = f element in
       begin match image with
       | Some _ ->
-	  incr c
+          incr c
       | None ->
-	  ()
+          ()
       end;
       image
     )
@@ -93,20 +93,20 @@ let repeat k x =
   in
   loop k x []
 
-module IntSet = Set.Make (struct 
-			    type t = int
-			    let compare = ( - )
-			  end)
+module IntSet = Set.Make (struct
+                            type t = int
+                            let compare = ( - )
+                          end)
 
-let separated_list_to_string printer separator list = 
+let separated_list_to_string printer separator list =
 
   let rec loop x = function
     | [] ->
         printer x
     | y :: xs ->
-        printer x 
-	^ separator 
-	^ loop y xs
+        printer x
+        ^ separator
+        ^ loop y xs
   in
 
   match list with
@@ -116,19 +116,19 @@ let separated_list_to_string printer separator list =
       loop x xs
 
 
-let index_map string_map = 
+let index_map string_map =
   let n = StringMap.cardinal string_map in
   let a = Array.create n None in
-  let conv, _ = StringMap.fold 
+  let conv, _ = StringMap.fold
     (fun k v (conv, idx) ->
        a.(idx) <- Some (k, v);
        StringMap.add k idx conv, idx + 1)
-    string_map (StringMap.empty, 0) 
+    string_map (StringMap.empty, 0)
   in
     ((fun n -> snd (unSome a.(n))),
      (fun k -> StringMap.find k conv),
      (fun n -> fst (unSome a.(n))))
-  
+
 let support_assoc l x =
   try
     List.assoc x l
@@ -149,9 +149,9 @@ let materialize (table : ('a, 'a option) Hashtbl.t) (x : 'a) : 'a list =
   let rec loop x =
     match Hashtbl.find table x with
     | None ->
-	[]
+        []
     | Some x ->
-	x :: loop x
+        x :: loop x
   in
   loop x
 
@@ -225,9 +225,9 @@ let rec smap f = function
       let x' = f x
       and xs' = smap f xs in
       if x == x' && xs == xs' then
-	l
+        l
       else
-	x' :: xs'
+        x' :: xs'
 
 let rec smapa f accu = function
   | [] ->
@@ -237,9 +237,9 @@ let rec smapa f accu = function
       let accu, xs' = smapa f accu xs in
       accu,
       if x == x' && xs == xs' then
-	l
+        l
       else
-	x' :: xs'
+        x' :: xs'
 
 let normalize s =
   let s = String.copy s in
@@ -249,9 +249,9 @@ let normalize s =
     | '('
     | ')'
     | ',' ->
-	s.[i] <- '_'
+        s.[i] <- '_'
     | _ ->
-	()
+        ()
   done;
   s
 
@@ -282,10 +282,10 @@ let rec gcps = function
       assert false
   | s :: ss ->
       let rec loop accu = function
-	| [] ->
-	    accu
-	| s :: ss ->
-	    loop (gcp s accu) ss
+        | [] ->
+            accu
+        | s :: ss ->
+            loop (gcp s accu) ss
       in
       loop s ss
 
@@ -302,7 +302,7 @@ let array_forall (p : 'a -> bool) (a : 'a array) : bool =
     for i = 0 to Array.length a - 1 do
       let x = Array.get a i in
       if not (p x) then
-	raise _ArrayForall
+        raise _ArrayForall
     done;
     true
   with ArrayForall ->

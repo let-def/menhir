@@ -61,7 +61,7 @@ let interface = {
       (Misc.normalize symbol, entrytypescheme symbol) :: decls
     ) PreFront.grammar.start_symbols []
 
-} 
+}
 
 (* Writing the interface to a file. *)
 

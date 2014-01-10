@@ -84,21 +84,21 @@ val ( $$ ) : 'a -> ('a -> 'b) -> 'b
 module IntSet    : Set.S with type elt = int
 
 (* [separated_list_to_string printer sep l] converts [l] into a string
-   representation built using [printer] on each element and [sep] as 
+   representation built using [printer] on each element and [sep] as
    a separator. *)
 
 val separated_list_to_string: ('a -> string) -> string -> 'a list -> string
 
 (* [index_map f] returns a triple (indexed_f, domain_indexation, domain_array).
-   [indexed_f] is a mapping from [0..n-1] to the elements of the map [f] 
-   ([n] being the size of the image of [f]). 
-   [domain_indexation] is a mapping from the domain of the map [f] to indexes. 
-   [domain_array] is a mapping from the indexes to the domain of [f]. 
+   [indexed_f] is a mapping from [0..n-1] to the elements of the map [f]
+   ([n] being the size of the image of [f]).
+   [domain_indexation] is a mapping from the domain of the map [f] to indexes.
+   [domain_array] is a mapping from the indexes to the domain of [f].
    The indexation implements [f] ie:
    - forall x in domain(m), indexed_f (domain_indexation x) = f (x).
    - forall x in domain(m), domain_array (domain_indexation x) = x. *)
 
-val index_map 
+val index_map
   : 'a StringMap.t -> (int -> 'a) * (string -> int) * (int -> string)
 
 (* [support_assoc l x] returns the second component of the first couple

@@ -52,34 +52,34 @@ end) = struct
     match d1, d2 with
     | Infinity, _
     | _, Infinity ->
-	Infinity
+        Infinity
     | Finite i1, Finite i2 ->
-	Finite (i1 + i2)
+        Finite (i1 + i2)
 
   let min d1 d2 =
     match d1, d2 with
     | Infinity, d
     | d, Infinity ->
-	d
+        d
     | Finite i1, Finite i2 ->
-	Finite (min i1 i2)
+        Finite (min i1 i2)
 
   let le d1 d2 =
     match d1, d2 with
     | Infinity, Infinity ->
-	true
+        true
     | Infinity, Finite _ ->
-	false
+        false
     | Finite _, Infinity ->
-	true
+        true
     | Finite i1, Finite i2 ->
-	i1 <= i2
+        i1 <= i2
 
   (* Allocate and initialize a distance matrix. At allocation time, every entry
      is initialized to infinity. Then, we iterate over all edges, and copy them
      into the distance matrix. *)
 
-  (* Note that, by default, [d.(i).(i)] is not initialized to zero: it is 
+  (* Note that, by default, [d.(i).(i)] is not initialized to zero: it is
      initialized to infinity. This is because we are looking for paths of
      non-zero length. In other words, we are computing a transitive closure,
      not a reflexive, transitive closure. *)
@@ -87,18 +87,18 @@ end) = struct
   let d =
     Array.init n (fun i ->
       Array.init n (fun j ->
-	Infinity
+        Infinity
       )
     )
 
   let () =
     iter (fun source ->
       successors (fun weight target ->
-	(* We use a min operation, so the graph may be a multi-graph, that is,
-	   multiple edges between two nodes are permitted. *)
-	let i = index source
-	and j = index target in
-	d.(i).(j) <- min (Finite weight) d.(i).(j)
+        (* We use a min operation, so the graph may be a multi-graph, that is,
+           multiple edges between two nodes are permitted. *)
+        let i = index source
+        and j = index target in
+        d.(i).(j) <- min (Finite weight) d.(i).(j)
       ) source
     )
 
@@ -114,13 +114,13 @@ end) = struct
   let graph_has_nonpositive_simple_cycle : bool =
     try
       for k = 0 to n-1 do
-	for i = 0 to n-1 do
-	  for j = 0 to n-1 do
-	    d.(i).(j) <- min d.(i).(j) (add d.(i).(k) d.(k).(j));
-	    if i = j && le d.(i).(j) (Finite 0) then
-	      raise Detection
-	  done
-	done
+        for i = 0 to n-1 do
+          for j = 0 to n-1 do
+            d.(i).(j) <- min d.(i).(j) (add d.(i).(k) d.(k).(j));
+            if i = j && le d.(i).(j) (Finite 0) then
+              raise Detection
+          done
+        done
       done;
       false
     with Detection ->

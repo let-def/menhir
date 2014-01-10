@@ -54,17 +54,17 @@ let grammar =
 
 let grammar =
   if Settings.inline then begin
-    let grammar, inlined = 
+    let grammar, inlined =
       NonTerminalDefinitionInlining.inline grammar
     in
     if not Settings.infer && inlined && not Settings.coq then
       Error.warning []
-	"you are using the standard library and/or the %inline keyword. We\n\
-	 recommend switching on --infer in order to avoid obscure type error messages.";
+        "you are using the standard library and/or the %inline keyword. We\n\
+         recommend switching on --infer in order to avoid obscure type error messages.";
     Time.tick "Inlining";
     grammar
   end
-  else 
+  else
     grammar
 
 (* If [--only-preprocess] or [--only-preprocess-drop] was specified on the

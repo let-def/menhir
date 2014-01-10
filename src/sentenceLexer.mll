@@ -50,19 +50,19 @@ let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '
 rule lex = parse
   | (lowercase identchar *) as lid
       { try
-	  let nt = Nonterminal.lookup lid in
-	  if StringSet.mem lid Front.grammar.UnparameterizedSyntax.start_symbols then
-	    NONTERMINAL nt
-	  else
-	    error1 lexbuf (Printf.sprintf "\"%s\" is not a start symbol." lid)
-	with Not_found ->
-	  error1 lexbuf (Printf.sprintf "\"%s\" is not a known non-terminal symbol." lid)
+          let nt = Nonterminal.lookup lid in
+          if StringSet.mem lid Front.grammar.UnparameterizedSyntax.start_symbols then
+            NONTERMINAL nt
+          else
+            error1 lexbuf (Printf.sprintf "\"%s\" is not a start symbol." lid)
+        with Not_found ->
+          error1 lexbuf (Printf.sprintf "\"%s\" is not a known non-terminal symbol." lid)
       }
   | (uppercase identchar *) as uid
       { try
-	  TERMINAL (Terminal.lookup uid)
-	with Not_found ->
-	  error1 lexbuf (Printf.sprintf "\"%s\" is not a known terminal symbol." uid)
+          TERMINAL (Terminal.lookup uid)
+        with Not_found ->
+          error1 lexbuf (Printf.sprintf "\"%s\" is not a known terminal symbol." uid)
       }
   | whitespace
       { lex lexbuf }

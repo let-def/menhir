@@ -40,16 +40,16 @@ let trim grammar =
   else
     let reachable =
       StringSet.fold (fun symbol visited ->
-	visit grammar visited symbol
-      ) grammar.start_symbols StringSet.empty 
+        visit grammar visited symbol
+      ) grammar.start_symbols StringSet.empty
     in
     StringMap.iter (fun symbol rule ->
       if not (StringSet.mem symbol reachable) then
-	Error.grammar_warning
-	  rule.positions
-	  (Printf.sprintf
-	     "symbol %s is unreachable from any of the start symbol(s)."
-	       symbol)
+        Error.grammar_warning
+          rule.positions
+          (Printf.sprintf
+             "symbol %s is unreachable from any of the start symbol(s)."
+               symbol)
     ) grammar.rules;
     { grammar with rules = StringMap.restrict reachable grammar.rules }
 

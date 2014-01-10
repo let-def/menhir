@@ -36,12 +36,12 @@ let magnitude (v : int) =
   else
     let rec check k max = (* [max] equals [2^k] *)
       if (max <= 0) || (v < max) then
-	k
-	  (* if [max] just overflew, then [v] requires a full ocaml
-	     integer, and [k] is the number of bits in an ocaml integer
-	     plus one, that is, [Sys.word_size]. *)
+        k
+          (* if [max] just overflew, then [v] requires a full ocaml
+             integer, and [k] is the number of bits in an ocaml integer
+             plus one, that is, [Sys.word_size]. *)
       else
-	check (2 * k) (max * max)
+        check (2 * k) (max * max)
     in
     check 1 2
 
@@ -55,7 +55,7 @@ let magnitude (v : int) =
 let pack (a : int array) : t =
 
   let m = Array.length a in
-  
+
   (* Compute the maximum magnitude of the array elements. This tells
      us how many bits per element we are going to use. *)
 
@@ -82,9 +82,9 @@ let pack (a : int array) : t =
 
     let n =
       if m mod w = 0 then
-	m / w
+        m / w
       else
-	m / w + 1
+        m / w + 1
     in
 
     let s =
@@ -98,11 +98,11 @@ let pack (a : int array) : t =
     let next () =
       let ii = !i in
       if ii = m then
-	0 (* ran off the end, pad with zeroes *)
+        0 (* ran off the end, pad with zeroes *)
       else
-	let v = a.(ii) in
-	i := ii + 1;
-	v
+        let v = a.(ii) in
+        i := ii + 1;
+        v
     in
 
     (* Fill up the string. *)
@@ -110,7 +110,7 @@ let pack (a : int array) : t =
     for j = 0 to n - 1 do
       let c = ref 0 in
       for x = 1 to w do
-	c := (!c lsl k) lor next()
+        c := (!c lsl k) lor next()
       done;
       s.[j] <- Char.chr !c
     done;
@@ -142,8 +142,8 @@ let pack (a : int array) : t =
     for i = 0 to m - 1 do
       let v = ref a.(i) in
       for x = 1 to w do
-	s.[(i + 1) * w - x] <- Char.chr (!v land 255);
-	v := !v lsr 8
+        s.[(i + 1) * w - x] <- Char.chr (!v land 255);
+        v := !v lsr 8
       done
     done;
 

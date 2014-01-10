@@ -128,11 +128,11 @@ let reducecellcasts prod i symbol casts =
     let t : typ =
       match semvtype symbol with
       | [] ->
-	  tunit
+          tunit
       | [ t ] ->
-	  t
+          t
       | _ ->
-	  assert false
+          assert false
     in
     (* Cast: [let id = ((Obj.magic id) : t) in ...]. *)
     (
@@ -172,15 +172,15 @@ let reducebody prod =
   let posbindings =
     ( PVar startp,
       if length > 0 then
-	EVar (Printf.sprintf "_startpos_%s_" ids.(0))
+        EVar (Printf.sprintf "_startpos_%s_" ids.(0))
       else
-	ERecordAccess(ERecordAccess (EVar env, flexbuf), flex_start_p)
+        ERecordAccess(ERecordAccess (EVar env, flexbuf), flex_start_p)
     ) ::
     ( PVar endp,
       if length > 0 then
-	EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
+        EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
       else
-	EVar startp
+        EVar startp
     ) :: []
   in
 
@@ -194,9 +194,9 @@ let reducebody prod =
       EComment (
         sprintf "Accepting %s" (Nonterminal.print false nt),
         blet (
-  	  [ pat, EVar stack ],
-	  ERaise (EData (accept, [ EVar ids.(0) ]))
-	)
+            [ pat, EVar stack ],
+          ERaise (EData (accept, [ EVar ids.(0) ]))
+        )
       )
 
   | None ->
@@ -204,33 +204,33 @@ let reducebody prod =
       (* This is a regular production. Perform a reduction. *)
 
       let action =
-	Production.action prod
+        Production.action prod
       in
       let act =
-	EAnnot (Action.to_il_expr action, type2scheme (semvtypent nt))
+        EAnnot (Action.to_il_expr action, type2scheme (semvtypent nt))
       in
 
       EComment (
         Production.print prod,
         blet (
-	  (pat, EVar stack) ::                  (* destructure the stack *)
-	  casts @                               (* perform type casts *)
-	  posbindings @                         (* bind [startp] and [endp] *)
-	  extrabindings fpreviouserror action @ (* add bindings for the weird keywords *)
-	  [ PVar semv, act ],                   (* run the user's code and bind [semv] *)
+          (pat, EVar stack) ::                  (* destructure the stack *)
+          casts @                               (* perform type casts *)
+          posbindings @                         (* bind [startp] and [endp] *)
+          extrabindings fpreviouserror action @ (* add bindings for the weird keywords *)
+          [ PVar semv, act ],                   (* run the user's code and bind [semv] *)
 
-	  ERecordWrite (
-	    EVar env, fstack,                   (* update the stack with ... *)
-	    ERecord [                           (* ... a new stack cell *)
-	      fstate, EVar state;               (* the current state after popping; it will be updated by [goto] *)
-	      fsemv, ERepr (EVar semv);         (* the newly computed semantic value *)
-	      fstartp, EVar startp;             (* the newly computed start and end positions *)
-	      fendp, EVar endp;
-	      fnext, EVar stack;                (* this is the stack after popping *)
-	    ]
-	  )
+          ERecordWrite (
+            EVar env, fstack,                   (* update the stack with ... *)
+            ERecord [                           (* ... a new stack cell *)
+              fstate, EVar state;               (* the current state after popping; it will be updated by [goto] *)
+              fsemv, ERepr (EVar semv);         (* the newly computed semantic value *)
+              fstartp, EVar startp;             (* the newly computed start and end positions *)
+              fendp, EVar endp;
+              fnext, EVar stack;                (* this is the stack after popping *)
+            ]
+          )
 
-	)
+        )
       )
 
 let semantic_action prod =
@@ -242,17 +242,17 @@ let semantic_action prod =
       (* Access the stack and current state via the environment. *)
 
       (* In fact, the current state needs be bound here only if this is
-	 an epsilon production. Otherwise, the variable [state] will be
-	 bound by the pattern produced by [reducecellparams] above. *)
+         an epsilon production. Otherwise, the variable [state] will be
+         bound by the pattern produced by [reducecellparams] above. *)
 
       ELet (
 
-	[ PVar stack, ERecordAccess (EVar env, fstack) ] @
-	  (if Production.length prod = 0 then [ PVar state, ERecordAccess (EVar env, fcurrent) ] else []),
+        [ PVar stack, ERecordAccess (EVar env, fstack) ] @
+          (if Production.length prod = 0 then [ PVar state, ERecordAccess (EVar env, fcurrent) ] else []),
 
-	(* Then, *)
+        (* Then, *)
 
-	reducebody prod
+        reducebody prod
 
       )
 
@@ -261,11 +261,11 @@ let semantic_action prod =
       (* For productions that are never reduced, generate no code. *)
 
       (* We do this mainly because [Invariant.prodstack] does not
-	 support productions that are never reduced. *)
-      
+         support productions that are never reduced. *)
+
       EComment (
-	"a production never reduced",
-	EApp (EVar "assert", [ EData ("false", []) ])
+        "a production never reduced",
+        EApp (EVar "assert", [ EData ("false", []) ])
       )
 
   )
@@ -451,38 +451,38 @@ let action node t =
   | Some _ ->
 
       (* [node] has a default reduction; in that case, the action
-	 table is never looked up. *)
+         table is never looked up. *)
 
       hole
 
   | None ->
 
       try
-	let target = SymbolMap.find (Symbol.T t) (Lr1.transitions node) in
+        let target = SymbolMap.find (Symbol.T t) (Lr1.transitions node) in
 
-	(* [node] has a transition to [target]. If [target] has a default
-	   reduction on [#], use [ShiftNoDiscard], otherwise [ShiftDiscard]. *)
+        (* [node] has a transition to [target]. If [target] has a default
+           reduction on [#], use [ShiftNoDiscard], otherwise [ShiftDiscard]. *)
 
-	match Invariant.has_default_reduction target with
-	| Some (_, toks) when TerminalSet.mem Terminal.sharp toks ->
-	    assert (TerminalSet.cardinal toks = 1);
-	    encode_ShiftNoDiscard target
-	| _ ->
-	    encode_ShiftDiscard target
+        match Invariant.has_default_reduction target with
+        | Some (_, toks) when TerminalSet.mem Terminal.sharp toks ->
+            assert (TerminalSet.cardinal toks = 1);
+            encode_ShiftNoDiscard target
+        | _ ->
+            encode_ShiftDiscard target
 
       with Not_found ->
-	try
+        try
 
-	  (* [node] has a reduction. *)
+          (* [node] has a reduction. *)
 
-	  let prod = Misc.single (TerminalMap.find t (Lr1.reductions node)) in
-	  encode_Reduce prod
+          let prod = Misc.single (TerminalMap.find t (Lr1.reductions node)) in
+          encode_Reduce prod
 
-	with Not_found ->
+        with Not_found ->
 
-	  (* [node] has no action. *)
+          (* [node] has no action. *)
 
-	  encode_Fail
+          encode_Fail
 
 (* In the error bitmap and in the action table, the row that corresponds to the
    [#] pseudo-terminal is never accessed. Thus, we do not create this row. This
@@ -527,9 +527,9 @@ let action =
     "action",
     marshal2 "action" Lr1.n (Terminal.n - 1) (
       Lr1.map (fun node ->
-	Terminal.mapx (fun t ->
-	  action node t
-	)
+        Terminal.mapx (fun t ->
+          action node t
+        )
       )
     )
   )
@@ -539,9 +539,9 @@ let goto =
     "goto",
     marshal2 "goto" Lr1.n Nonterminal.n (
       Lr1.map (fun node ->
-	Nonterminal.map (fun nt ->
-	  goto node nt
-	)
+        Nonterminal.map (fun nt ->
+          goto node nt
+        )
       )
     )
   )
@@ -552,13 +552,13 @@ let error =
     ETuple [
       EIntConst (Terminal.n - 1);
       marshal11 (
-	List.flatten (
-	  Lr1.map (fun node ->
-	    Terminal.mapx (fun t ->
-	      error node t
-	    )
-	  )
-	)
+        List.flatten (
+          Lr1.map (fun node ->
+            Terminal.mapx (fun t ->
+              error node t
+            )
+          )
+        )
       )
     ]
   )
@@ -568,7 +568,7 @@ let default_reduction =
     "default_reduction",
     marshal1 (
       Lr1.map (fun node ->
-	default_reduction node
+        default_reduction node
       )
     )
   )
@@ -578,7 +578,7 @@ let lhs =
     "lhs",
     marshal1 (
       Production.map (fun prod ->
-	Nonterminal.n2i (Production.nt prod)
+        Nonterminal.n2i (Production.nt prod)
       )
     )
   )
@@ -609,10 +609,10 @@ let trace =
     "trace",
     if Settings.trace then
       EData ("Some", [
-	ETuple [
-	  EArray (Terminal.map (stringwrap Terminal.print));
-	  EArray (Production.map (stringwrap reduce_or_accept));
-	]
+        ETuple [
+          EArray (Terminal.map (stringwrap Terminal.print));
+          EArray (Production.map (stringwrap reduce_or_accept));
+        ]
       ])
     else
       EData ("None", [])
@@ -637,11 +637,11 @@ let token2value =
     true
     (fun tok ->
       ERepr (
-	match Terminal.ocamltype tok with
-	| None ->
-	    EUnit
-	| Some _ ->
-	    EVar semv
+        match Terminal.ocamltype tok with
+        | None ->
+            EUnit
+        | Some _ ->
+            EVar semv
       )
     )
 
@@ -683,25 +683,25 @@ let application = {
     MApp (
       MVar make,
       MStruct {
-	struct_excdefs = [
-	  excredef;
-	];
-	struct_typedefs = [
-	  tokendef2;
-	];
-	struct_nonrecvaldefs = [
-	  token2terminal;
-	  define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
-	  token2value;
-	  default_reduction;
-	  error;
-	  action;
-	  lhs;
-	  goto;
-	  semantic_action;
-	  define ("recovery", eboolconst Settings.recovery);
-	  trace;
-	];
+        struct_excdefs = [
+          excredef;
+        ];
+        struct_typedefs = [
+          tokendef2;
+        ];
+        struct_nonrecvaldefs = [
+          token2terminal;
+          define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
+          token2value;
+          default_reduction;
+          error;
+          action;
+          lhs;
+          goto;
+          semantic_action;
+          define ("recovery", eboolconst Settings.recovery);
+          trace;
+        ];
       }
     );
 
@@ -721,35 +721,35 @@ let api : IL.valdef list =
     let nt : Nonterminal.t =
       match Production.classify prod with
       | Some nt ->
-	  nt
+          nt
       | None ->
-	  assert false (* this is a start production *)
+          assert false (* this is a start production *)
     in
 
     let t : typ =
       match Nonterminal.ocamltype nt with
       | Some t ->
-	  TypTextual t
+          TypTextual t
       | None ->
-	  assert false (* every start symbol should carry a type *)
+          assert false (* every start symbol should carry a type *)
     in
-    
+
     define (
       Nonterminal.print true nt,
       EFun (
-	[ PVar lexer; PVar lexbuf ],
-	EAnnot (
-	  EMagic (
-	    EApp (
-	      EVar entry, [
-		EIntConst (Lr1.number state);
-		EVar lexer;
-		EVar lexbuf
-	      ]
-	    )
-	  ),
-	  type2scheme t
-	)
+        [ PVar lexer; PVar lexbuf ],
+        EAnnot (
+          EMagic (
+            EApp (
+              EVar entry, [
+                EIntConst (Lr1.number state);
+                EVar lexer;
+                EVar lexbuf
+              ]
+            )
+          ),
+          type2scheme t
+        )
       )
     ) ::
     api

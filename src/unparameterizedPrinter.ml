@@ -24,25 +24,25 @@ let print_preludes f g =
     Printf.fprintf f "%%{%s%%}\n" prelude.stretch_raw_content
   ) g.preludes
 
-let print_start_symbols b g = 
+let print_start_symbols b g =
   StringSet.iter (fun symbol ->
     Printf.fprintf b "%%start %s\n" (Misc.normalize symbol)
   ) g.start_symbols
-    
+
 let rec insert_in_partitions item m = function
-  | [] -> 
+  | [] ->
       [ (m, [ item ]) ]
-	
-  | (m', items) :: partitions when Mark.same m m' -> 
+
+  | (m', items) :: partitions when Mark.same m m' ->
       (m', item :: items) :: partitions
-	
+
   | t :: partitions ->
       t :: (insert_in_partitions item m partitions)
-     
+
 let insert (undefined, partitions) = function
   | (item, UndefinedPrecedence) ->
       ((item, 0) :: undefined, partitions)
-	
+
   | (item, PrecedenceLevel (m, v, _, _)) ->
       (undefined, insert_in_partitions (item, v) m partitions)
 
@@ -50,9 +50,9 @@ let print_ocamltype ocamltype =
   Printf.sprintf " <%s>" (
     match ocamltype with
     | Declared stretch ->
-	stretch.stretch_raw_content
+        stretch.stretch_raw_content
     | Inferred t ->
-	t
+        t
     )
 
 let print_assoc = function
@@ -65,15 +65,15 @@ let print_assoc = function
   | UndefinedAssoc ->
       ""
 
-let print_tokens mode b g = 
+let print_tokens mode b g =
   (* Sort tokens wrt precedence. *)
-  let undefined, partition_tokens = 
+  let undefined, partition_tokens =
     StringMap.fold (fun token prop acu ->
       insert acu (token, prop.tk_priority)
     ) g.tokens ([], [])
   in
   let ordered_tokens =
-    List.fold_left (fun acu (_, ms) -> 
+    List.fold_left (fun acu (_, ms) ->
       acu @ List.sort (fun (_, v) (_, v') -> compare v v') ms
     ) undefined partition_tokens
   in
@@ -81,53 +81,53 @@ let print_tokens mode b g =
     let prop = StringMap.find token g.tokens in
     if prop.tk_is_declared then
       Printf.fprintf b "%%token%s %s\n"
-	begin match mode with
-	| PrintNormal
-	| PrintUnitActions ->
-	    Misc.o2s prop.tk_ocamltype print_ocamltype
-	| PrintUnitActionsUnitTokens ->
-	    "" (* omitted ocamltype after %token means <unit> *)
-	end
-	token
+        begin match mode with
+        | PrintNormal
+        | PrintUnitActions ->
+            Misc.o2s prop.tk_ocamltype print_ocamltype
+        | PrintUnitActionsUnitTokens ->
+            "" (* omitted ocamltype after %token means <unit> *)
+        end
+        token
   ) ordered_tokens;
 
-  ignore (List.fold_left 
-	    (fun last_prop (token, v) -> 
-	       let prop = StringMap.find token g.tokens in 
-		 match last_prop with
+  ignore (List.fold_left
+            (fun last_prop (token, v) ->
+               let prop = StringMap.find token g.tokens in
+                 match last_prop with
 
-		   | None ->
-		       if prop.tk_associativity = UndefinedAssoc then
-			 None
-		       else (
-			 Printf.fprintf b "%s %s "
-			   (print_assoc prop.tk_associativity) token;
-			 Some v)
-			 
-		   | Some v' when v <> v' -> 
-		       if prop.tk_associativity = UndefinedAssoc then
-			 None
-		       else (
-			 Printf.fprintf b "\n%s %s "
-			   (print_assoc prop.tk_associativity) token;
-			 Some v)
-			 
-		   | Some v' -> 
-		       Printf.fprintf b "%s " token;
-		       last_prop
-			 
-	    ) None ordered_tokens);
+                   | None ->
+                       if prop.tk_associativity = UndefinedAssoc then
+                         None
+                       else (
+                         Printf.fprintf b "%s %s "
+                           (print_assoc prop.tk_associativity) token;
+                         Some v)
+
+                   | Some v' when v <> v' ->
+                       if prop.tk_associativity = UndefinedAssoc then
+                         None
+                       else (
+                         Printf.fprintf b "\n%s %s "
+                           (print_assoc prop.tk_associativity) token;
+                         Some v)
+
+                   | Some v' ->
+                       Printf.fprintf b "%s " token;
+                       last_prop
+
+            ) None ordered_tokens);
   Printf.fprintf b "\n"
 
-let print_types mode b g = 
+let print_types mode b g =
   StringMap.iter (fun symbol ty ->
-    Printf.fprintf b "%%type%s %s\n" 
+    Printf.fprintf b "%%type%s %s\n"
       begin match mode with
       | PrintNormal ->
-	  print_ocamltype ty
+          print_ocamltype ty
       | PrintUnitActions
       | PrintUnitActionsUnitTokens ->
-	  " <unit>"
+          " <unit>"
       end
       (Misc.normalize symbol)
   ) g.types
@@ -143,13 +143,13 @@ let binding mode id =
 let string_of_producer mode (symbol, ido) =
   Misc.o2s ido (binding mode) ^ (Misc.normalize symbol)
 
-let print_branch mode f branch = 
+let print_branch mode f branch =
   Printf.fprintf f "%s%s\n    {"
     (String.concat " " (List.map (string_of_producer mode) branch.producers))
     (Misc.o2s branch.branch_shift_precedence (fun x -> " %prec "^x.value));
   begin match mode with
   | PrintNormal ->
-      Action.print f branch.action  
+      Action.print f branch.action
   | PrintUnitActions
   | PrintUnitActionsUnitTokens ->
       Printf.fprintf f "()"
@@ -159,39 +159,39 @@ let print_branch mode f branch =
 let print_trailers b g =
   List.iter (Printf.fprintf b "%s\n") g.postludes
 
-let branches_order r r' = 
-  let branch_order b b' = 
+let branches_order r r' =
+  let branch_order b b' =
     match b.branch_reduce_precedence, b'.branch_reduce_precedence with
       | UndefinedPrecedence, _ | _, UndefinedPrecedence ->
-	  0
+          0
       | PrecedenceLevel (m, l, _, _), PrecedenceLevel (m', l', _, _) ->
-	  if Mark.same m m' then
-	    if l < l' then
-	      -1
-	    else if l > l' then
-	      1
-	    else 
-	      0
-	  else 0
+          if Mark.same m m' then
+            if l < l' then
+              -1
+            else if l > l' then
+              1
+            else
+              0
+          else 0
   in
-  let rec lexical_order bs bs' = 
+  let rec lexical_order bs bs' =
     match bs, bs' with
       | [], [] ->
-	  0
+          0
       | [], _ ->
-	  -1
+          -1
       | _, [] ->
-	  1
+          1
       | b :: bs, b' :: bs' ->
-	  match branch_order b b' with
-	    | 0 -> 
-		lexical_order bs bs'
-	    | x -> 
-		x
+          match branch_order b b' with
+            | 0 ->
+                lexical_order bs bs'
+            | x ->
+                x
   in
     lexical_order r.branches r'.branches
 
-let print_rules mode b g = 
+let print_rules mode b g =
   let rules_as_list =
     StringMap.fold (fun nt r acu -> (nt, r) :: acu) g.rules []
   in
@@ -200,7 +200,7 @@ let print_rules mode b g =
   in
   List.iter (fun (nt, r) ->
     Printf.fprintf b "\n%s:\n" (Misc.normalize nt);
-    List.iter (fun br -> 
+    List.iter (fun br ->
       Printf.fprintf b "| ";
       print_branch mode b br
     ) r.branches

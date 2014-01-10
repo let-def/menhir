@@ -40,36 +40,36 @@ let stream (toks : Terminal.t list) : unit -> Terminal.t * Lexing.position * Lex
       match !toks with
       | tok :: more ->
 
-	  (* Take a token off the list, and return it. *)
+          (* Take a token off the list, and return it. *)
 
-	  toks := more;
-	  tok
+          toks := more;
+          tok
 
       | [] ->
 
-	  (* The finite list has been exhausted. Here, two plausible behaviors
-	     come to mind.
+          (* The finite list has been exhausted. Here, two plausible behaviors
+             come to mind.
 
-	     The first behavior consists in raising an exception. In that case,
-	     we are creating a finite stream, and it is up to the parser to not
-	     read past its end.
+             The first behavior consists in raising an exception. In that case,
+             we are creating a finite stream, and it is up to the parser to not
+             read past its end.
 
-	     The second behavior consists in returning a designated token. In
-	     that case, we are creating an infinite, eventually constant,
-	     stream.
+             The second behavior consists in returning a designated token. In
+             that case, we are creating an infinite, eventually constant,
+             stream.
 
-	     The choice between these two behaviors is somewhat arbitrary;
-	     furthermore, in the second case, the choice of the designated
-	     token is arbitrary as well. Here, we adopt the second behavior if
-	     and only if the grammar has an EOF token, and we use EOF as the
-	     designated token. Again, this is arbitrary, and could be changed
-	     in the future. *)
+             The choice between these two behaviors is somewhat arbitrary;
+             furthermore, in the second case, the choice of the designated
+             token is arbitrary as well. Here, we adopt the second behavior if
+             and only if the grammar has an EOF token, and we use EOF as the
+             designated token. Again, this is arbitrary, and could be changed
+             in the future. *)
 
-	  match Terminal.eof with
-	  | Some eof ->
-	      eof
-	  | None ->
-	      raise EndOfStream
+          match Terminal.eof with
+          | Some eof ->
+              eof
+          | None ->
+              raise EndOfStream
 
     in
 
@@ -91,17 +91,17 @@ let interpret ((nto, toks) : sentence) : unit =
   let nt =
     match nto, ProductionMap.is_singleton Lr1.entry with
     | Some nt, _ ->
-	nt
+        nt
     | None, Some (prod, _) ->
-	begin match Production.classify prod with
-	| Some nt ->
-	    nt
-	| None ->
-	    assert false
-	end
+        begin match Production.classify prod with
+        | Some nt ->
+            nt
+        | None ->
+            assert false
+        end
     | None, None ->
-	Error.error []
-	  "Because the grammar has multiple start symbols, each of the\n\
+        Error.error []
+          "Because the grammar has multiple start symbols, each of the\n\
            sentences provided on the standard input channel must be of the\n\
            form: <start symbol>: <token>*"
   in
@@ -117,30 +117,30 @@ let interpret ((nto, toks) : sentence) : unit =
   begin try
     match
       MenhirLib.Convert.Simplified.traditional2revised
-	(ReferenceInterpreter.interpret Settings.trace nt)
-	(stream toks)
+        (ReferenceInterpreter.interpret Settings.trace nt)
+        (stream toks)
     with
 
     | Some cst ->
 
-	(* Success. *)
+        (* Success. *)
 
-	Printf.printf "ACCEPT";
-	if Settings.interpret_show_cst then begin
-	  print_newline();
-	  Cst.show stdout cst
-	end
+        Printf.printf "ACCEPT";
+        if Settings.interpret_show_cst then begin
+          print_newline();
+          Cst.show stdout cst
+        end
 
     | None ->
 
-	(* Parser failure. *)
+        (* Parser failure. *)
 
-	Printf.printf "REJECT"
+        Printf.printf "REJECT"
 
   with EndOfStream ->
 
     (* Lexer failure. *)
-    
+
     Printf.printf "OVERSHOOT"
 
   end;
@@ -168,18 +168,18 @@ let () =
 
     let read () =
       try
-	SentenceParser.sentence SentenceLexer.lex lexbuf
+        SentenceParser.sentence SentenceLexer.lex lexbuf
       with Parsing.Parse_error ->
-	Error.error (Positions.lexbuf lexbuf) "Ill-formed input sentence."
+        Error.error (Positions.lexbuf lexbuf) "Ill-formed input sentence."
     in
 
     let rec loop () =
       match read() with
       | None ->
-	  exit 0
+          exit 0
       | Some sentence ->
-	  interpret sentence;
-	  loop()
+          interpret sentence;
+          loop()
     in
     loop()
 

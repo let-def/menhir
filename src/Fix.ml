@@ -198,16 +198,16 @@ end
     assert (src.outgoing = []);
     let rec loop = function
       | [] ->
-	  ()
+          ()
       | dst :: dsts ->
-	  if dst.marked then
-	    loop dsts (* skip duplicate elements *)
-	  else begin
-	    dst.marked <- true;
-	    link src dst;
-	    loop dsts;
-	    dst.marked <- false
-	  end
+          if dst.marked then
+            loop dsts (* skip duplicate elements *)
+          else begin
+            dst.marked <- true;
+            link src dst;
+            loop dsts;
+            dst.marked <- false
+          end
     in
     loop dsts
 
@@ -297,7 +297,7 @@ module Workset : sig
 
   (* [insert node] inserts [node] into the workset. [node] must have no
      successors. *)
-  val insert: node -> unit  
+  val insert: node -> unit
 
   (* [repeat f] repeatedly applies [f] to a node extracted out of the
      workset, until the workset becomes empty. [f] is allowed to use
@@ -305,7 +305,7 @@ module Workset : sig
   val repeat: (node -> unit) -> unit
 
   (* That's it! *)
-end 
+end
 = struct
 
   (* Initialize the workset. *)

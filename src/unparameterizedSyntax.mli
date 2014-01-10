@@ -12,9 +12,9 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(* A parameterized branch may instantiate parameterized non terminals. 
-   If the parameterized branch contributes to the definition of a 
-   parameterized terminal, then the instantiation of parameterized 
+(* A parameterized branch may instantiate parameterized non terminals.
+   If the parameterized branch contributes to the definition of a
+   parameterized terminal, then the instantiation of parameterized
    non terminals that are defined simultaneously must only be done with
    formal parameters.
    Furthermore, all the parameterized non terminals that are in a common
@@ -39,7 +39,7 @@ type branch =
       branch_reduce_precedence  : branch_reduce_precedence
     }
 
-type rule = 
+type rule =
     {
       branches		   : branch list;
       positions            : Positions.t list;
@@ -47,7 +47,7 @@ type rule =
       inline_flag          : bool;
     }
 
-type grammar = 
+type grammar =
     {
       preludes	           : Stretch.t list;
       postludes	           : Syntax.trailer list;

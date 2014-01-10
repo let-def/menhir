@@ -42,9 +42,9 @@ let version =
 type construction_mode =
   | ModeCanonical     (* --canonical: canonical Knuth LR(1) automaton *)
   | ModeInclusionOnly (* --no-pager : states are merged when there is an inclusion
-			              relationship, default reductions are used *)
+                                      relationship, default reductions are used *)
   | ModePager         (* normal mode: states are merged as per Pager's criterion,
-			              default reductions are used *)
+                                      default reductions are used *)
 
 (* Note that --canonical overrides --no-pager. If both are specified, the result
    is a canonical automaton. *)
@@ -124,16 +124,16 @@ let logG, logA, logC =
 let timings =
   ref false
 
-let filenames = 
+let filenames =
   ref StringSet.empty
 
-let no_stdlib = 
+let no_stdlib =
   ref false
 
 let stdlib_path =
   ref Installation.libdir
 
-let insert name = 
+let insert name =
   filenames := StringSet.add name !filenames
 
 let interpret =
@@ -142,10 +142,10 @@ let interpret =
 let interpret_show_cst =
   ref false
 
-let table = 
+let table =
   ref false
 
-let coq = 
+let coq =
   ref false
 
 let coq_no_complete =
@@ -261,23 +261,23 @@ let () =
       ()
   | SuggestCompFlags ->
       if !table then
-	if Installation.ocamlfind then
-	  printf "-package menhirLib\n%!"
-	else
-	  printf "-I %s\n%!" Installation.libdir;
+        if Installation.ocamlfind then
+          printf "-package menhirLib\n%!"
+        else
+          printf "-I %s\n%!" Installation.libdir;
       exit 0
   | SuggestLinkFlags extension ->
       if !table then
-	if Installation.ocamlfind then
-	  printf "-linkpkg\n%!"
-	else
-	  printf "menhirLib.%s\n%!" extension;
+        if Installation.ocamlfind then
+          printf "-linkpkg\n%!"
+        else
+          printf "menhirLib.%s\n%!" extension;
       exit 0
 
 (* ------------------------------------------------------------------------- *)
 (* Export the settings. *)
 
-let stdlib_filename = 
+let stdlib_filename =
   !stdlib_path ^ "/standard.mly"
 
 let filenames =
@@ -287,20 +287,20 @@ let base =
   if !base = "" then
     match filenames with
     | [] ->
-	fprintf stderr "%s\n" usage;
-	exit 1
+        fprintf stderr "%s\n" usage;
+        exit 1
     | [ filename ] ->
-	Filename.chop_suffix filename (if !coq then ".vy" else ".mly")
+        Filename.chop_suffix filename (if !coq then ".vy" else ".mly")
     | _ ->
-	fprintf stderr "Error: you must specify --base when providing multiple input files.\n";
-	exit 1
+        fprintf stderr "Error: you must specify --base when providing multiple input files.\n";
+        exit 1
   else
     !base
 
-let filenames = 
+let filenames =
   if !no_stdlib || !coq then
     filenames
-  else 
+  else
     stdlib_filename :: filenames
 
 let token_type_mode =
@@ -366,10 +366,10 @@ let interpret =
 let interpret_show_cst =
   !interpret_show_cst
 
-let table = 
+let table =
   !table
 
-let coq = 
+let coq =
   !coq
 
 let coq_no_complete =
