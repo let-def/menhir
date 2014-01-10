@@ -82,7 +82,7 @@ module Make (T : TABLE) = struct
   let rec run env please_discard : void =
 
     (* Log the fact that we just entered this state. *)
-    
+
     let s = env.current in
     Log.state s;
 
@@ -203,19 +203,19 @@ module Make (T : TABLE) = struct
 
     if (
       try
-	T.semantic_action prod env;
-	true
+        T.semantic_action prod env;
+        true
       with Error ->
-	false
+        false
     ) then begin
 
       (* By our convention, the semantic action is responsible for updating
-	 the stack. The state now found in the top stack cell is the return
-	 state. *)
+         the stack. The state now found in the top stack cell is the return
+         state. *)
 
       (* Perform a goto transition. The target state is determined
-	 by consulting the goto table at the return state and at
-	 production [prod]. *)
+         by consulting the goto table at the return state and at
+         production [prod]. *)
 
       env.current <- T.goto env.stack.state prod;
       run env false
@@ -299,7 +299,7 @@ module Make (T : TABLE) = struct
     else begin
 
       (* The stack is nonempty. Pop a cell, updating the current state
-	 with that found in the popped cell, and try again. *)
+         with that found in the popped cell, and try again. *)
 
       env.stack <- next;
       env.current <- cell.state;
@@ -354,14 +354,14 @@ module Make (T : TABLE) = struct
     try
 
       (* If ocaml offered a [match/with] construct with zero branches, this is
-	 what we would use here, since the type [void] has zero cases. *)
+         what we would use here, since the type [void] has zero cases. *)
 
       let (_ : void) = run env false in
       assert false (* cannot fail *)
 
     with
     | Accept v ->
-	v
+        v
 
 end
 

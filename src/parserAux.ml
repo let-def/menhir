@@ -20,7 +20,7 @@ let current_token_precedence =
   fun pos1 pos2 ->
     incr c;
     PrecedenceLevel (Error.get_filemark (), !c, pos1, pos2)
-      
+
 let current_reduce_precedence =
   let c = ref 0 in
   fun () ->
@@ -44,29 +44,29 @@ let check_production_group right_hand_sides pos1 pos2 action =
   begin
     match right_hand_sides with
     | [] ->
-	assert false
+        assert false
     | ((producers : producer list), _, _, _) :: right_hand_sides ->
-	let ids = defined_identifiers producers in
-	List.iter (fun (producers, _, _, _) ->
-	  let ids' = defined_identifiers producers in
-	  try
-	    let id =
-	      IdSet.choose (IdSet.union
-				  (IdSet.diff ids ids')
-				  (IdSet.diff ids' ids))
-	    in
-	    Error.error [Positions.position id]
-	      "Two productions that share a semantic action must define\n\
-	       exactly the same identifiers."
-	  with Not_found ->
-	    ()
-	  ) right_hand_sides
+        let ids = defined_identifiers producers in
+        List.iter (fun (producers, _, _, _) ->
+          let ids' = defined_identifiers producers in
+          try
+            let id =
+              IdSet.choose (IdSet.union
+                                  (IdSet.diff ids ids')
+                                  (IdSet.diff ids' ids))
+            in
+            Error.error [Positions.position id]
+              "Two productions that share a semantic action must define\n\
+               exactly the same identifiers."
+          with Not_found ->
+            ()
+          ) right_hand_sides
   end;
   begin
     if List.length right_hand_sides > 1 && Action.use_dollar action then
       Error.signal (Positions.two pos1 pos2)
-	"A semantic action that is shared between several productions must\n\
- 	 not use the $i notation -- semantic values must be named instead."
+        "A semantic action that is shared between several productions must\n\
+          not use the $i notation -- semantic values must be named instead."
   end
 
 let override pos o1 o2 =

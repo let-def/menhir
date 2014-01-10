@@ -394,7 +394,7 @@ let nomagic e =
 (* [env.shifted] is either [-1], which means that we have an [error] token
    at the head of the token stream, or a nonnegative number. (The code in
    [discard], which increments [env.shifted], takes care to avoid overflow.)
-   
+
    The following assertion checks that [env.shifted] is not [-1], that is,
    it is greater than or equal to [0]. Prior to 2011/01/24, two forms of
    this test co-existed, but it seems more uniform to have just one form. *)
@@ -402,7 +402,7 @@ let nomagic e =
 let assertshifted : pattern * expr =
   PUnit,
   EApp (EVar "assert",
-	[ EApp (EVar "Pervasives.(<>)", [ ERecordAccess (EVar env, fshifted); EIntConst (-1) ]) ])
+        [ EApp (EVar "Pervasives.(<>)", [ ERecordAccess (EVar env, fshifted); EIntConst (-1) ]) ])
 
 let etuple = function
   | [] ->
@@ -468,11 +468,11 @@ let gotopushes : Nonterminal.t -> bool =
   Nonterminal.tabulate (fun nt ->
     not (
       Lr1.targets (fun accu _ target ->
-	accu &&
-	match Invariant.has_default_reduction target with
-	| Some (prod, _) ->
-	    Production.length prod > 0
-	| None -> false
+        accu &&
+        match Invariant.has_default_reduction target with
+        | Some (prod, _) ->
+            Production.length prod > 0
+        | None -> false
       ) true (Symbol.N nt)
     )
   )
@@ -570,15 +570,15 @@ let () =
     Nonterminal.fold (fun nt accu ->
       accu &&
       if gotopushes nt then
-	true
+        true
       else
-	Lr1.targets (fun accu _ target ->
-	  accu &&
-	  match Invariant.has_default_reduction target with
-	  | Some (prod, _) ->
-	      shiftreduce prod
-	  | None ->
-	      false
+        Lr1.targets (fun accu _ target ->
+          accu &&
+          match Invariant.has_default_reduction target with
+          | Some (prod, _) ->
+              shiftreduce prod
+          | None ->
+              false
         ) true (Symbol.N nt)
     ) true
   )
@@ -593,14 +593,14 @@ let statetypedef = {
   typename =       tcstate;
   typeparams =     [];
   typerhs =        TDefSum (
-		     Lr1.fold (fun defs s ->
-		       if Invariant.represented s then {
-			 dataname =       statecon s;
-			 datavalparams =  [];
-			 datatypeparams = None
-		       } :: defs
-		       else defs
-		     ) []
+                     Lr1.fold (fun defs s ->
+                       if Invariant.represented s then {
+                         dataname =       statecon s;
+                         datavalparams =  [];
+                         datatypeparams = None
+                       } :: defs
+                       else defs
+                     ) []
                    );
   typeconstraint = None
 }
@@ -629,7 +629,7 @@ let envtypedef = {
       field false flexbuf tlexbuf;
 
       (* The last token that was read from the lexer. This is the
-	 head of the token stream, unless [env.shifted] is [-1]. *)
+         head of the token stream, unless [env.shifted] is [-1]. *)
 
       field true ftoken ttoken;
 
@@ -642,10 +642,10 @@ let envtypedef = {
       field true fendp tposition;
 
       (* How many tokens were successfully shifted since the last
-	 [error] token was shifted. When this counter is -1, the head
-	 of the token stream is the [error] token, and the contents of
-	 the [token] field is irrelevant. The token following [error]
-	 is obtained by invoking the lexer again. *)
+         [error] token was shifted. When this counter is -1, the head
+         of the token stream is the [error] token, and the contents of
+         the [token] field is irrelevant. The token following [error]
+         is obtained by invoking the lexer again. *)
 
       field true fshifted tint;
 
@@ -677,7 +677,7 @@ let curry = function
 let curryif flag t =
   if flag then curry t else t
 
-(* Types for stack cells. 
+(* Types for stack cells.
 
    [celltype tailtype holds_state symbol] returns the type of a stack
    cell. The parameter [tailtype] is the type of the tail of the
@@ -700,7 +700,7 @@ let celltype tailtype holds_state symbol _ =
     insertif (Invariant.endp symbol) tposition
   )
 
-(* Types for stacks. 
+(* Types for stacks.
 
    [stacktype s] is the type of the stack at state
    [s]. [reducestacktype prod] is the type of the stack when about to
@@ -755,7 +755,7 @@ let gototypescheme nt =
 
 let reduce_expects_state_param prod =
   let nt = Production.nt prod in
-  Production.length prod = 0 && 
+  Production.length prod = 0 &&
   Invariant.fold (fun _ holds_state _ _ -> holds_state) false (Invariant.gotostack nt)
 
 (* The type of the [reduce] function. If shiftreduce optimization
@@ -766,9 +766,9 @@ let reducetypescheme prod =
   auto2scheme (
     arrow tenv (
       curryif (shiftreduce prod) (
-	arrow (reducestacktype prod) (
-	  arrowif (reduce_expects_state_param prod) tstate tresult
-	)
+        arrow (reducestacktype prod) (
+          arrowif (reduce_expects_state_param prod) tstate tresult
+        )
       )
     )
   )
@@ -961,16 +961,16 @@ let check_recoverer covered s =
   match Terminal.eof with
   | None ->
       (* We do not know which token represents the end of file,
-	 so we say nothing. *)
+         so we say nothing. *)
       ()
   | Some eof ->
       if not (TerminalSet.mem eof covered) then
-	(* This state has no (shift or reduce) action at EOF. *)
-	Error.warning []
-	  (Printf.sprintf
-	     "state %d can perform error recovery, but does not accept EOF.\n\
-	      ** Hitting the end of file during error recovery will cause non-termination."
-		  (Lr1.number s))
+        (* This state has no (shift or reduce) action at EOF. *)
+        Error.warning []
+          (Printf.sprintf
+             "state %d can perform error recovery, but does not accept EOF.\n\
+              ** Hitting the end of file during error recovery will cause non-termination."
+                  (Lr1.number s))
 
 (* ------------------------------------------------------------------------ *)
 (* Code production for the automaton functions. *)
@@ -1003,7 +1003,7 @@ let reducebranch toks prod s =
       tokspat toks;
     branchbody =
       call_reduce prod s
-  } 
+  }
 
 (* Code for shifting from state [s] to state [s'] via the token [tok].
    This produces a branch, to be inserted in an [action] function for
@@ -1083,51 +1083,51 @@ let gettoken s defred e =
       assert (TerminalSet.cardinal toks = 1);
 
       (* There is a default reduction on token [#]. We cannot
-	 request the next token, since that might drive the
-	 lexer off the end of the input stream, so we cannot
-	 call [discard]. Do nothing. *)
+         request the next token, since that might drive the
+         lexer off the end of the input stream, so we cannot
+         call [discard]. Do nothing. *)
 
       e
 
   | Some (Symbol.T _), Some _ ->
 
       (* There is some other default reduction. Discard the first
-	 input token. *)
+         input token. *)
 
       blet ([ PWildcard, EApp (EVar discard, [ EVar env ]) ], e)
 
   | Some (Symbol.T _), None ->
 
       (* There is no default reduction. Discard the first input token
-	 and peek at the next one. *)
+         and peek at the next one. *)
 
       blet ([ PVar token, EApp (EVar discard, [ EVar env ]) ], e)
 
   | (Some (Symbol.N _) | None), Some _ ->
 
       (* There is some default reduction. Do not peek at the input
-	 token. *)
+         token. *)
 
       e
 
   | (Some (Symbol.N _) | None), None ->
 
       (* There is no default reduction. Peek at the first input token,
-	 without taking it off the input stream. This is normally done
-	 by reading [env.token], unless the token might be [error]:
-	 then, we check [env.shifted] first. *)
+         without taking it off the input stream. This is normally done
+         by reading [env.token], unless the token might be [error]:
+         then, we check [env.shifted] first. *)
 
       if Invariant.errorpeeker s then begin
-	incr errorpeekers;
-	EIfThenElse (
-	  EApp (EVar "Pervasives.(=)", [ ERecordAccess (EVar env, fshifted); EIntConst (-1) ]),
-	  tracecomment "Resuming error handling" (call_error_via_errorcase magic s),
-	  blet ([ PVar token, ERecordAccess (EVar env, ftoken) ], e)
+        incr errorpeekers;
+        EIfThenElse (
+          EApp (EVar "Pervasives.(=)", [ ERecordAccess (EVar env, fshifted); EIntConst (-1) ]),
+          tracecomment "Resuming error handling" (call_error_via_errorcase magic s),
+          blet ([ PVar token, ERecordAccess (EVar env, ftoken) ], e)
         )
       end
       else
-	blet ([ assertshifted;
-		PVar token, ERecordAccess (EVar env, ftoken) ], e)
+        blet ([ assertshifted;
+                PVar token, ERecordAccess (EVar env, ftoken) ], e)
 
 (* This produces the definition of a [run] function. *)
 
@@ -1146,7 +1146,7 @@ let actiondef s body = {
   valpublic = false;
   valpat = PVar (action s);
   valval = EAnnot (EFun (actionparams pvar, body), actiontypescheme s)
-} 
+}
 
 (* This produces the comment attached with a default reduction. *)
 
@@ -1177,8 +1177,8 @@ let errorbookkeeping e =
   tracecomment
     "Initiating error handling"
     (blet (
-      concatif previouserror_required 
-	[ PUnit, ERecordWrite (EVar env, fpreviouserror, ERecordAccess (EVar env, fshifted)) ] @
+      concatif previouserror_required
+        [ PUnit, ERecordWrite (EVar env, fpreviouserror, ERecordAccess (EVar env, fshifted)) ] @
       [ PUnit, ERecordWrite (EVar env, fshifted, EIntConst (-1)) ],
       e
     ))
@@ -1220,17 +1220,17 @@ let initiate covered s =
       check_recoverer covered s;
 
       EIfThenElse (
-	EApp (EVar "Pervasives.(=)", [ ERecordAccess (EVar env, fshifted); EIntConst 0 ]),
-	blet (
-	  trace "Discarding last token read (%s)"
-		[ EApp (EVar print_token, [ ERecordAccess (EVar env, ftoken) ]) ] @
-	  [
-	    PVar token, EApp (EVar discard, [ EVar env ]);
-	    PUnit, ERecordWrite (EVar env, fshifted, EIntConst 0)
-	  ],
-	  call_action s
-	),
-	errorbookkeeping (call_error_via_errorcase magic s)
+        EApp (EVar "Pervasives.(=)", [ ERecordAccess (EVar env, fshifted); EIntConst 0 ]),
+        blet (
+          trace "Discarding last token read (%s)"
+                [ EApp (EVar print_token, [ ERecordAccess (EVar env, ftoken) ]) ] @
+          [
+            PVar token, EApp (EVar discard, [ EVar env ]);
+            PUnit, ERecordWrite (EVar env, fshifted, EIntConst 0)
+          ],
+          call_action s
+        ),
+        errorbookkeeping (call_error_via_errorcase magic s)
       )
 
     end
@@ -1257,88 +1257,88 @@ let rec runactiondef s : valdef list =
   | Some (prod, toks) as defred ->
 
       (* Perform reduction without looking ahead. In this case,
-	 no separate [action] function is required.
+         no separate [action] function is required.
 
-	 If shiftreduce optimization is being performed, then no
+         If shiftreduce optimization is being performed, then no
          stack cell is allocated. The contents of the top stack
          cell are passed do [reduce] as extra parameters. *)
 
       [
-	rundef s (
+        rundef s (
           runpushcellunless (shiftreduce prod) s (
-	    gettoken s defred (
-	      defaultreductioncomment toks (
-		call_reduce prod s
-	      )
-	    )
-	  )
-	)
+            gettoken s defred (
+              defaultreductioncomment toks (
+                call_reduce prod s
+              )
+            )
+          )
+        )
       ]
 
   | None ->
 
       (* If this state is willing to act on the error token, ignore
-	 that -- this is taken care of elsewhere. *)
+         that -- this is taken care of elsewhere. *)
 
       let transitions =
-	SymbolMap.remove (Symbol.T Terminal.error) (Lr1.transitions s)
+        SymbolMap.remove (Symbol.T Terminal.error) (Lr1.transitions s)
       and reductions =
-	TerminalMap.remove Terminal.error (Lr1.reductions s)
+        TerminalMap.remove Terminal.error (Lr1.reductions s)
       in
 
       (* Construct the main case analysis that determines what action
-	 should be taken next.
+         should be taken next.
 
-	 A default branch, where an error is detected, is added if the
-	 analysis is not exhaustive. In the default branch, we
-	 initiate error handling. *)
+         A default branch, where an error is detected, is added if the
+         analysis is not exhaustive. In the default branch, we
+         initiate error handling. *)
 
       let covered, branches =
-	ProductionMap.fold (fun prod toks (covered, branches) ->
-	  (* There is a reduction for these tokens. *)
-	  TerminalSet.union toks covered,
-	  reducebranch toks prod s :: branches
-	) (Lr1.invert reductions) (TerminalSet.empty, [])
+        ProductionMap.fold (fun prod toks (covered, branches) ->
+          (* There is a reduction for these tokens. *)
+          TerminalSet.union toks covered,
+          reducebranch toks prod s :: branches
+        ) (Lr1.invert reductions) (TerminalSet.empty, [])
       in
 
       let covered, branches =
-	SymbolMap.fold (fun symbol s' (covered, branches) ->
-	  match symbol with
-	  | Symbol.T tok ->
-	      (* There is a shift transition for this token. *)
-	      TerminalSet.add tok covered,
-	      shiftbranch s tok s' :: branches
-	  | Symbol.N _ ->
-	      covered, branches
-	) transitions (covered, branches)
+        SymbolMap.fold (fun symbol s' (covered, branches) ->
+          match symbol with
+          | Symbol.T tok ->
+              (* There is a shift transition for this token. *)
+              TerminalSet.add tok covered,
+              shiftbranch s tok s' :: branches
+          | Symbol.N _ ->
+              covered, branches
+        ) transitions (covered, branches)
       in
 
       let branches =
-	if TerminalSet.subset TerminalSet.universe covered then
-	  branches
-	else
-	  branches @ [ { branchpat = PWildcard; branchbody = initiate covered s } ]
+        if TerminalSet.subset TerminalSet.universe covered then
+          branches
+        else
+          branches @ [ { branchpat = PWildcard; branchbody = initiate covered s } ]
       in
 
       (* Finally, construct the code for [run] and [action]. The
-	 former pushes things onto the stack, obtains the lookahead
-	 token, and calls the [action] function. The latter performs
-	 the main case analysis on the lookahead token. *)
+         former pushes things onto the stack, obtains the lookahead
+         token, and calls the [action] function. The latter performs
+         the main case analysis on the lookahead token. *)
 
       [
-	rundef s (
-	  runpushcell s (
-	    gettoken s None (
-	      call_action s
-	    )
-	  )
-	);
-	actiondef s (
-	  EMatch (
-	    EVar token,
-	    branches
-	  )
-	)
+        rundef s (
+          runpushcell s (
+            gettoken s None (
+              call_action s
+            )
+          )
+        );
+        actiondef s (
+          EMatch (
+            EVar token,
+            branches
+          )
+        )
       ]
 
 (* This is the body of the [reduce] function associated with
@@ -1368,9 +1368,9 @@ let reducebody prod =
     Invariant.fold (fun (i, pat) holds_state symbol _ ->
       i + 1,
       if i = length - 1 && shiftreduce prod then
-	pat
+        pat
       else
-	ptuple (pat :: reducecellparams prod i holds_state symbol)
+        ptuple (pat :: reducecellparams prod i holds_state symbol)
     ) (0, PVar stack) (Invariant.prodstack prod)
   in
 
@@ -1384,13 +1384,13 @@ let reducebody prod =
   let unitbindings =
     Misc.foldi length (fun i unitbindings ->
       if used.(i) then
-	match semvtype rhs.(i) with
-	| [] ->
-	    (PVar ids.(i), EUnit) :: unitbindings
-	| _ ->
-	    unitbindings
+        match semvtype rhs.(i) with
+        | [] ->
+            (PVar ids.(i), EUnit) :: unitbindings
+        | _ ->
+            unitbindings
       else
-	unitbindings
+        unitbindings
     ) []
   in
 
@@ -1416,15 +1416,15 @@ let reducebody prod =
     in
     insertif bind_startp
       ( PVar startp,
-	if length > 0 then
-	  EVar (Printf.sprintf "_startpos_%s_" ids.(0))
+        if length > 0 then
+          EVar (Printf.sprintf "_startpos_%s_" ids.(0))
         else
           ERecordAccess (EVar env, fstartp)
       ) @
     insertif bind_endp
       ( PVar endp,
-	if length > 0 then
-	  EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
+        if length > 0 then
+          EVar (Printf.sprintf "_endpos_%s_" ids.(length - 1))
         else
           if bind_startp then EVar startp else ERecordAccess (EVar env, fstartp)
       )
@@ -1441,9 +1441,9 @@ let reducebody prod =
       tracecomment
         "Accepting"
         (blet (
-  	  [ pat, EVar stack ],
-	  EMagic (EVar ids.(0))
-	))
+            [ pat, EVar stack ],
+          EMagic (EVar ids.(0))
+        ))
 
   else
 
@@ -1457,18 +1457,18 @@ let reducebody prod =
     tracecomment
       (Printf.sprintf "Reducing production %s" (Production.print prod))
       (blet (
-	(pat, EVar stack) ::
-	unitbindings @
-	posbindings action @
-	extrabindings fpreviouserror action,
+        (pat, EVar stack) ::
+        unitbindings @
+        posbindings action @
+        extrabindings fpreviouserror action,
 
-	(* If the semantic action is susceptible of raising [Error],
-	   use a [let/unless] construct, otherwise use [let]. *)
+        (* If the semantic action is susceptible of raising [Error],
+           use a [let/unless] construct, otherwise use [let]. *)
 
-	if Action.has_syntaxerror action then
-	  letunless act semv (call_goto nt) (errorbookkeeping call_errorcase)
-	else
-	  blet ([ PVar semv, act ], call_goto nt)
+        if Action.has_syntaxerror action then
+          letunless act semv (call_goto nt) (errorbookkeeping call_errorcase)
+        else
+          blet ([ PVar semv, act ], call_goto nt)
       ))
 
 (* This is the definition of the [reduce] function associated with
@@ -1509,10 +1509,10 @@ let gotobody nt =
   let branches =
     Lr1.targets (fun branches sources target ->
       {
-	branchpat =
-	  pstatescon sources;
-	branchbody =
-	  call_run target (runparams magic var target)
+        branchpat =
+          pstatescon sources;
+        branchbody =
+          call_run target (runparams magic var target)
       } :: branches
     ) [] (Symbol.N nt)
   in
@@ -1521,18 +1521,18 @@ let gotobody nt =
   | [] ->
 
       (* If there are no branches, then this [goto] function is never
-	 invoked. The inliner will drop it, so whatever we generate
-	 here is unimportant. *)
+         invoked. The inliner will drop it, so whatever we generate
+         here is unimportant. *)
 
       call_assertfalse
 
   | [ branch ] ->
 
       (* If there is only one branch, no case analysis is required.
-	 This optimization is not strictly necessary if GADTs are used
-	 by the compiler to prove that the case analysis is
-	 exhaustive. It does improve readability, though, and is also
-	 useful if the compiler does not have GADTs. *)
+         This optimization is not strictly necessary if GADTs are used
+         by the compiler to prove that the case analysis is
+         exhaustive. It does improve readability, though, and is also
+         useful if the compiler does not have GADTs. *)
 
       EPatComment (
         "State should be ",
@@ -1543,9 +1543,9 @@ let gotobody nt =
   | _ ->
 
       (* In the general case, we keep the branches computed above and,
-	 unless [nt] is universal, add a default branch, which is
-	 theoretically useless but helps avoid warnings if the
-	 compiler does not have GADTs. *)
+         unless [nt] is universal, add a default branch, which is
+         theoretically useless but helps avoid warnings if the
+         compiler does not have GADTs. *)
 
       let default = {
         branchpat = PWildcard;
@@ -1563,7 +1563,7 @@ let gotodef nt = {
     false;
   valpat =
     PVar (goto nt);
-  valval = 
+  valval =
     EAnnot (EFun (gotoparams pvar nt, gotopushcell nt (gotobody nt)), gototypescheme nt)
 }
 
@@ -1591,19 +1591,19 @@ let errorbody s =
       let prod = Misc.single prods in
 
       (* There is a reduce transition on error. If shiftreduce
-	 optimization is enabled for this production, then we must pop
-	 an extra cell for [reduce]'s calling convention to be met. *)
+         optimization is enabled for this production, then we must pop
+         an extra cell for [reduce]'s calling convention to be met. *)
 
       let extrapop e =
-	if shiftreduce prod then
-	  let pat =
-	    ptuple (PVar stack :: Invariant.fold_top (runcellparams pvar) [] (Invariant.stack s))
-	  in
-	  blet ([ pat, EVar stack ], e)
-	else
-	  e
+        if shiftreduce prod then
+          let pat =
+            ptuple (PVar stack :: Invariant.fold_top (runcellparams pvar) [] (Invariant.stack s))
+          in
+          blet ([ pat, EVar stack ], e)
+        else
+          e
       in
-	
+
       handle s (
         extrapop (
           call_reduce prod s
@@ -1614,21 +1614,21 @@ let errorbody s =
 
       (* This state is unable to handle errors. Pop the stack to find
          a state that does handle errors, a state that can further pop
-	 the stack, or die. *)
+         the stack, or die. *)
 
       match Invariant.rewind s with
       | Invariant.Die ->
-	  can_die := true;
+          can_die := true;
           ERaise errorval
       | Invariant.DownTo (w, st) ->
-	  let _, pat = Invariant.fold errorcellparams (0, PVar stack) w in
-	  blet (
-	    [ pat, EVar stack ],
-	    match st with
-	    | Invariant.Represented ->
-		call_errorcase
-	    | Invariant.UnRepresented s ->
-		call_error magic s
+          let _, pat = Invariant.fold errorcellparams (0, PVar stack) w in
+          blet (
+            [ pat, EVar stack ],
+            match st with
+            | Invariant.Represented ->
+                call_errorcase
+            | Invariant.UnRepresented s ->
+                call_error magic s
           )
 
 (* This is the [error] function associated with state [s]. *)
@@ -1655,12 +1655,12 @@ let errorcasedef =
   let branches =
     Lr1.fold (fun branches s ->
       if Invariant.represented s then
-	{
-	  branchpat  = pstatecon s;
-	  branchbody = EApp (EVar (error s), [ EVar env; EMagic (EVar stack) ])
+        {
+          branchpat  = pstatecon s;
+          branchbody = EApp (EVar (error s), [ EVar env; EMagic (EVar stack) ])
         } :: branches
       else
-	branches
+        branches
     ) []
   in
   {
@@ -1670,14 +1670,14 @@ let errorcasedef =
       PVar errorcase;
     valval =
       EAnnot (
-	EFun (
-	  errorcaseparams nomagic pvar,
-	  EMatch (
-	    EVar state,
-	    branches
-	  )
-	),
-	errorcasetypescheme
+        EFun (
+          errorcaseparams nomagic pvar,
+          EMatch (
+            EVar state,
+            branches
+          )
+        ),
+        errorcasetypescheme
       )
   }
 
@@ -1691,7 +1691,7 @@ let errorcasedef =
    The code initializes a parser environment, an empty stack, and
    invokes [run]. *)
 
-let entrydef s = 
+let entrydef s =
   let nt = Item.startnt (Lr1.start2item s) in
   let lexer = "lexer"
   and lexbuf = "lexbuf" in
@@ -1700,14 +1700,14 @@ let entrydef s =
     valpat = PVar (Nonterminal.print true nt);
     valval = EAnnot (
                EFun ( [ PVar lexer; PVar lexbuf ],
-		 blet (
-		   [ PVar env, EApp (EVar initenv, [ EVar lexer; EVar lexbuf ]) ],
-		   EMagic (EApp (EVar (run s), [ EVar env; EUnit ]))
-		 )
-	       ),
+                 blet (
+                   [ PVar env, EApp (EVar initenv, [ EVar lexer; EVar lexbuf ]) ],
+                   EMagic (EApp (EVar (run s), [ EVar env; EUnit ]))
+                 )
+               ),
                entrytypescheme (Nonterminal.print true nt)
              )
-  } 
+  }
 
 (* ------------------------------------------------------------------------ *)
 (* Code production for auxiliary functions. *)
@@ -1718,16 +1718,16 @@ let entrydef s =
 let assertfalsedef = {
   valpublic = false;
   valpat = PVar assertfalse;
-  valval = 
+  valval =
     EAnnot (
       EFun ([ PUnit ],
-	blet ([
-	    PUnit, EApp (EVar "Printf.fprintf",
-		       [ EVar "Pervasives.stderr";
-			 EStringConst "Internal failure -- please contact the parser generator's developers.\n%!" ]);
-	  ],
-	  EApp (EVar "assert", [ efalse ])
-	)
+        blet ([
+            PUnit, EApp (EVar "Printf.fprintf",
+                       [ EVar "Pervasives.stderr";
+                         EStringConst "Internal failure -- please contact the parser generator's developers.\n%!" ]);
+          ],
+          EApp (EVar "assert", [ efalse ])
+        )
       ),
       scheme [ "a" ] (arrow tunit (tvar "a"))
     )
@@ -1765,25 +1765,25 @@ let discarddef = {
     and shifted = "shifted" in
     EAnnot (
       EFun (
-	[ PVar env ],
-	blet ([
-	  PVar lexbuf, ERecordAccess (EVar env, flexbuf);
-	  PVar token, EApp (ERecordAccess (EVar env, flexer), [ EVar lexbuf ]);
-	  PUnit, ERecordWrite (EVar env, ftoken, EVar token);
-	  PUnit, ERecordWrite (EVar env, fstartp, ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"));
-	  PUnit, ERecordWrite (EVar env, fendp, ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p")) ] @
-	  trace "Lookahead token is now %s (%d-%d)"
-		[ EApp (EVar print_token, [ EVar token ]);
-		  ERecordAccess (ERecordAccess (EVar env, fstartp), "Lexing.pos_cnum");
-		  ERecordAccess (ERecordAccess (EVar env, fendp), "Lexing.pos_cnum") ] @ [
-	  PVar shifted, EApp (EVar "Pervasives.(+)", [ ERecordAccess (EVar env, fshifted); EIntConst 1 ]);
-	  PUnit, EIfThen (
-		    EApp (EVar "Pervasives.(>=)", [ EVar shifted; EIntConst 0 ]),
-		      ERecordWrite (EVar env, fshifted, EVar shifted)
-		  )
-	  ],
-	  EVar token
-	)
+        [ PVar env ],
+        blet ([
+          PVar lexbuf, ERecordAccess (EVar env, flexbuf);
+          PVar token, EApp (ERecordAccess (EVar env, flexer), [ EVar lexbuf ]);
+          PUnit, ERecordWrite (EVar env, ftoken, EVar token);
+          PUnit, ERecordWrite (EVar env, fstartp, ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"));
+          PUnit, ERecordWrite (EVar env, fendp, ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p")) ] @
+          trace "Lookahead token is now %s (%d-%d)"
+                [ EApp (EVar print_token, [ EVar token ]);
+                  ERecordAccess (ERecordAccess (EVar env, fstartp), "Lexing.pos_cnum");
+                  ERecordAccess (ERecordAccess (EVar env, fendp), "Lexing.pos_cnum") ] @ [
+          PVar shifted, EApp (EVar "Pervasives.(+)", [ ERecordAccess (EVar env, fshifted); EIntConst 1 ]);
+          PUnit, EIfThen (
+                    EApp (EVar "Pervasives.(>=)", [ EVar shifted; EIntConst 0 ]),
+                      ERecordWrite (EVar env, fshifted, EVar shifted)
+                  )
+          ],
+          EVar token
+        )
       ),
       type2scheme (arrow tenv ttoken)
     )
@@ -1799,30 +1799,30 @@ let initenvdef =
   {
     valpublic = false;
     valpat = PVar initenv;
-    valval = 
+    valval =
       EAnnot (
-	EFun ( [ PVar lexer; PVar lexbuf ],
-	  blet (
-	    [ PVar token, EApp (EVar lexer, [ EVar lexbuf ]) ] @
-	    trace "Lookahead token is now %s (%d-%d)"
-		  [ EApp (EVar print_token, [ EVar token ]);
-		    ERecordAccess (ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"), "Lexing.pos_cnum");
-		    ERecordAccess (ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p"), "Lexing.pos_cnum") ],
-	    ERecord ([
-	      (flexer, EVar lexer);
-	      (flexbuf, EVar lexbuf);
-	      (ftoken, EVar token);
-	      (fstartp, ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"));
-	      (fendp, ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p"));
-	      (fshifted, EMaxInt)
-	    ] @
-	    insertif previouserror_required (fpreviouserror, EMaxInt)
-	    )
-	  )
-	),
+        EFun ( [ PVar lexer; PVar lexbuf ],
+          blet (
+            [ PVar token, EApp (EVar lexer, [ EVar lexbuf ]) ] @
+            trace "Lookahead token is now %s (%d-%d)"
+                  [ EApp (EVar print_token, [ EVar token ]);
+                    ERecordAccess (ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"), "Lexing.pos_cnum");
+                    ERecordAccess (ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p"), "Lexing.pos_cnum") ],
+            ERecord ([
+              (flexer, EVar lexer);
+              (flexbuf, EVar lexbuf);
+              (ftoken, EVar token);
+              (fstartp, ERecordAccess (EVar lexbuf, "Lexing.lex_start_p"));
+              (fendp, ERecordAccess (EVar lexbuf, "Lexing.lex_curr_p"));
+              (fshifted, EMaxInt)
+            ] @
+            insertif previouserror_required (fpreviouserror, EMaxInt)
+            )
+          )
+        ),
         type2scheme (marrow [ tlexer; tlexbuf ] tenv)
       )
-  } 
+  }
 
 (* ------------------------------------------------------------------------ *)
 (* Here is complete code for the parser. *)
@@ -1856,18 +1856,18 @@ let program = {
       gotodef nt :: defs
     ) (Production.fold (fun prod defs ->
       if Invariant.ever_reduced prod then
-	reducedef prod :: defs
+        reducedef prod :: defs
       else
-	defs
+        defs
     ) [ discarddef; initenvdef; printtokendef; assertfalsedef; errorcasedef ])));
 
   moduledefs =
     [];
-	
+
   postlogue =
     Front.grammar.UnparameterizedSyntax.postludes
 
-} 
+}
 
 (* ------------------------------------------------------------------------ *)
 (* We are done! *)
@@ -1882,7 +1882,7 @@ let () =
 
 let () =
   if not !can_die then
-    Error.logC 1 (fun f -> Printf.fprintf f 
+    Error.logC 1 (fun f -> Printf.fprintf f
       "The generated parser cannot raise Error.\n")
 
 let () =

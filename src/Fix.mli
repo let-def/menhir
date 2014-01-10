@@ -96,4 +96,3 @@ module Make
        computation takes place, on demand, when [get] is applied. *)
     val lfp: equations -> valuation
   end
-  

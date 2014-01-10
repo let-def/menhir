@@ -81,12 +81,12 @@ let posvar s w f =
 (* ------------------------------------------------------------------------- *)
 (* Sets of keywords. *)
 
-module KeywordSet = 
-  struct 
+module KeywordSet =
+  struct
     include Set.Make (struct
-			type t = keyword
-			let compare = compare
-		      end)
+                        type t = keyword
+                        let compare = compare
+                      end)
 
     (* This converts a list of keywords with positions into a set of keywords. *)
     let from_list keywords =

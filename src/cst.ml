@@ -38,22 +38,22 @@ let rec pcst b = function
       Printf.bprintf b "%s" (Terminal.print tok)
 
   | CstNonTerminal (prod, csts) ->
-      
+
       (* A node is denoted by a bracketed, whitespace-separated list,
-	 whose head is a non-terminal symbol (followed with a colon)
-	 and whose tail consists of the node's descendants. *)
+         whose head is a non-terminal symbol (followed with a colon)
+         and whose tail consists of the node's descendants. *)
 
       (* There is in fact some ambiguity in this notation, since we
-	 only print the non-terminal symbol that forms the left-hand
-	 side of production [prod], instead of the production itself.
+         only print the non-terminal symbol that forms the left-hand
+         side of production [prod], instead of the production itself.
 
-	 This abuse makes things much more readable, and should be
-	 acceptable for the moment. The cases where ambiguity actually
-	 arises should be rare. *)
+         This abuse makes things much more readable, and should be
+         acceptable for the moment. The cases where ambiguity actually
+         arises should be rare. *)
 
       Printf.bprintf b "[%s:%a]"
-	(Nonterminal.print false (Production.nt prod))
-	pcsts csts
+        (Nonterminal.print false (Production.nt prod))
+        pcsts csts
 
   | CstError ->
 
@@ -80,25 +80,25 @@ let print =
    the same as that used by the above printer; the only difference is
    that the [Pprint] library is used to manage indentation. *)
 
-open Pprint 
+open Pprint
 
 let rec build : cst -> document = function
   | CstTerminal tok ->
       text (Terminal.print tok)
   | CstNonTerminal (prod, csts) ->
       brackets (
-	group (
-	  text (Nonterminal.print false (Production.nt prod)) ^^
-	  colon ^^
-	  group (
-	    nest 2 (
-	      Array.fold_left (fun doc cst ->
-		doc ^^ break1 ^^ build cst
-	      ) empty csts
-	    )
-	  ) ^^
-	  break0
-	)
+        group (
+          text (Nonterminal.print false (Production.nt prod)) ^^
+          colon ^^
+          group (
+            nest 2 (
+              Array.fold_left (fun doc cst ->
+                doc ^^ break1 ^^ build cst
+              ) empty csts
+            )
+          ) ^^
+          break0
+        )
       )
   | CstError ->
       text "error"

@@ -30,7 +30,7 @@ type program = {
 
     (* Exception definitions. *)
     excdefs: excdef list;
-    
+
     (* Algebraic data type definitions (mutually recursive). *)
     typedefs: typedef list;
 
@@ -42,11 +42,11 @@ type program = {
 
     (* Function definitions (mutually recursive). *)
     valdefs: valdef list;
-		
+
     (* Raw Objective Caml postlogue. *)
     postlogue: string list;
 
-  } 
+  }
 
 and interface = {
 
@@ -55,14 +55,14 @@ and interface = {
 
     (* Exception definitions. *)
     excdecls: excdef list;
-    
+
     (* Algebraic data type declarations (mutually recursive). *)
     typedecls: typedef list;
 
     (* Value declarations. *)
     valdecls: (string * typescheme) list
 
-  } 
+  }
 
 and excdef = {
 
@@ -90,7 +90,7 @@ and typedef = {
     (* Constraint. *)
     typeconstraint: (typ * typ) option
 
-  } 
+  }
 
 and typedefrhs =
   | TDefRecord of fielddef list
@@ -108,7 +108,7 @@ and fielddef = {
     (* Type of the field. *)
     fieldtype: typescheme
 
-  }  
+  }
 
 and datadef = {
 
@@ -122,10 +122,10 @@ and datadef = {
        [None] if this is an ordinary ADT. *)
     datatypeparams: typ list option;
 
-  } 
+  }
 
 and typ =
-  
+
   (* Textual Objective Caml type. *)
   | TypTextual of Stretch.ocamltype
 
@@ -149,7 +149,7 @@ and typescheme = {
   (* Body. *)
   body: typ;
 
-  } 
+  }
 
 and valdef = {
 
@@ -165,7 +165,7 @@ and valdef = {
   (* Value to which it is bound. *)
   valval: expr
 
-  } 
+  }
 
 and expr =
 
@@ -234,7 +234,7 @@ and branch = {
   (* Branch body. *)
   branchbody: expr;
 
-  } 
+  }
 
 and pattern =
 
@@ -289,7 +289,7 @@ and structure = {
 
   (* Exception definitions. *)
   struct_excdefs: excdef list;
-    
+
   (* Algebraic data type definitions (mutually recursive). *)
   struct_typedefs: typedef list;
 

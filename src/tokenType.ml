@@ -35,23 +35,23 @@ let tokentypedef =
     StringMap.fold (fun token properties defs ->
 
       (* Pseudo-tokens (used in %prec declarations, but never
-	 declared using %token) are filtered out. *)
+         declared using %token) are filtered out. *)
 
       if properties.tk_is_declared then
-	let params =
-	  match properties.tk_ocamltype with
-	  | None ->
-	      []
-	  | Some t ->
-	      [ TypTextual t ]
-	in
-	{
-	  dataname = token;
-	  datavalparams = params;
-	  datatypeparams = None
-	} :: defs
+        let params =
+          match properties.tk_ocamltype with
+          | None ->
+              []
+          | Some t ->
+              [ TypTextual t ]
+        in
+        {
+          dataname = token;
+          datavalparams = params;
+          datatypeparams = None
+        } :: defs
       else
-	defs
+        defs
     ) PreFront.grammar.tokens []
   in
   {
@@ -71,38 +71,38 @@ let tokentypedef, tokenprefix =
   | Settings.TokenTypeOnly ->
 
       (* Create both an .mli file and an .ml file. This is made
-	 necessary by the fact that the two can be different
-	 when there are functor parameters. *)
+         necessary by the fact that the two can be different
+         when there are functor parameters. *)
 
-      let module P = 
-	Printer.Make (struct 
-			let f = open_out (Settings.base ^ ".mli")
-			let raw_stretch_action = false
-			let locate_stretches = None 
-			let parenthesize_let_lhs = false
-		      end) 
+      let module P =
+        Printer.Make (struct
+                        let f = open_out (Settings.base ^ ".mli")
+                        let raw_stretch_action = false
+                        let locate_stretches = None
+                        let parenthesize_let_lhs = false
+                      end)
       in
       P.interface {
         paramdecls = PreFront.grammar.parameters;
         excdecls = [];
-	typedecls = [ tokentypedef ];
-	valdecls = []
+        typedecls = [ tokentypedef ];
+        valdecls = []
       };
-      let module P = 
-	Printer.Make (struct 
-			let f = open_out (Settings.base ^ ".ml")
-			let raw_stretch_action = false
-			let locate_stretches = None 
-		      end) 
+      let module P =
+        Printer.Make (struct
+                        let f = open_out (Settings.base ^ ".ml")
+                        let raw_stretch_action = false
+                        let locate_stretches = None
+                      end)
       in
       P.program {
         paramdefs = PreFront.grammar.parameters;
         prologue = [];
         excdefs = [];
-	typedefs = [ tokentypedef ];
+        typedefs = [ tokentypedef ];
         nonrecvaldefs = [];
-	valdefs = [];
-	moduledefs = [];
+        valdefs = [];
+        moduledefs = [];
         postlogue = [];
       };
       exit 0

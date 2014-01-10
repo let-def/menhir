@@ -27,7 +27,7 @@
     let token = f lexbuf in
     lexbuf.lex_start_p <- startp;
     token
-  
+
   (* Updates the line counter, which is used in some error messages. *)
 
   let update_loc lexbuf =
@@ -37,7 +37,7 @@
       pos_bol = pos.pos_cnum;
     }
 
-  (* Extracts a chunk out of the source file. *)    
+  (* Extracts a chunk out of the source file. *)
 
   let chunk ofs1 ofs2 =
     let contents = Error.get_file_contents() in
@@ -61,7 +61,7 @@
 
   (* Creates a stretch. *)
 
-  let mk_stretch parenthesize pos1 pos2 pkeywords = 
+  let mk_stretch parenthesize pos1 pos2 pkeywords =
     let ofs1 = pos1.pos_cnum
     and ofs2 = pos2.pos_cnum in
     let raw_content = chunk ofs1 ofs2 in
@@ -76,38 +76,38 @@
       | Keyword.Dollar _
       | Keyword.Position (Keyword.Left, _, _)
       | Keyword.PreviousError ->
-	  ()
+          ()
       | Keyword.SyntaxError ->
-	  (* $syntaxerror is replaced with
-	     (raise _eRR) *)
+          (* $syntaxerror is replaced with
+             (raise _eRR) *)
           let source = "(raise _eRR)" in
           String.blit source 0 content ofs (String.length source)
       | Keyword.Position (subject, where, _) ->
-	  let ofslpar =
-	    match where with
-	    | Keyword.WhereStart ->
-		ofs + 9
-	    | Keyword.WhereEnd ->
-		ofs + 7
-	  in
-	  overwrite content ofslpar '(' '_';
-	  match subject with
-	  | Keyword.Left ->
-	      assert false
-	  | Keyword.RightDollar i ->
-	      overwrite content (ofslpar + 1) '$' '_';
-	      overwrite content (ofslpar + 2 + String.length (string_of_int i)) ')' '_'
-	  | Keyword.RightNamed id ->
-	      overwrite content (ofslpar + 1 + String.length id) ')' '_'
+          let ofslpar =
+            match where with
+            | Keyword.WhereStart ->
+                ofs + 9
+            | Keyword.WhereEnd ->
+                ofs + 7
+          in
+          overwrite content ofslpar '(' '_';
+          match subject with
+          | Keyword.Left ->
+              assert false
+          | Keyword.RightDollar i ->
+              overwrite content (ofslpar + 1) '$' '_';
+              overwrite content (ofslpar + 2 + String.length (string_of_int i)) ')' '_'
+          | Keyword.RightNamed id ->
+              overwrite content (ofslpar + 1 + String.length id) ')' '_'
     ) pkeywords;
     (* Add whitespace so that the column numbers match those of the source file.
        If requested, add parentheses so that the semantic action can be inserted
        into other code without ambiguity. *)
     let content =
       if parenthesize then
-	  (String.make (pos1.pos_cnum - pos1.pos_bol - 1) ' ') ^ "(" ^ content ^ ")"
+          (String.make (pos1.pos_cnum - pos1.pos_bol - 1) ' ') ^ "(" ^ content ^ ")"
       else
-	(String.make (pos1.pos_cnum - pos1.pos_bol) ' ') ^ content
+        (String.make (pos1.pos_cnum - pos1.pos_bol) ' ') ^ content
     in
     {
       Stretch.stretch_filename = Error.get_filename();
@@ -116,7 +116,7 @@
       Stretch.stretch_content = content;
       Stretch.stretch_raw_content = raw_content;
       Stretch.stretch_keywords = pkeywords
-    } 
+    }
 
   (* Translates the family of position-related keywords to abstract
      syntax. *)
@@ -125,23 +125,23 @@
     let where =
       match w with
       | Some _ ->
-	  Keyword.WhereStart
+          Keyword.WhereStart
       | None ->
-	  Keyword.WhereEnd
+          Keyword.WhereEnd
     and flavor =
       match f with
       | Some _ ->
-	  Keyword.FlavorPosition
+          Keyword.FlavorPosition
       | None ->
-	  Keyword.FlavorOffset
+          Keyword.FlavorOffset
     and subject =
       match n, id with
       | Some n, None ->
-	  Keyword.RightDollar (int_of_string n)
+          Keyword.RightDollar (int_of_string n)
       | None, Some id ->
-	  Keyword.RightNamed id
+          Keyword.RightNamed id
       | None, None ->
-	  Keyword.Left
+          Keyword.Left
       | Some _, Some _ ->
           assert false
     in
@@ -229,7 +229,7 @@ let uppercase = ['A'-'Z' '\192'-'\214' '\216'-'\222']
 
 let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9'] (* '\'' forbidden *)
 
-let poskeyword = 
+let poskeyword =
   '$'
   (("start" as w) | "end")
   (("pos" as f) | "ofs")
@@ -285,11 +285,11 @@ rule main = parse
     { PLUS }
 | (lowercase identchar *) as id
     { if Hashtbl.mem reserved id then
-	Error.errorp
-	  (Positions.with_poss (lexeme_start_p lexbuf) (lexeme_end_p lexbuf) ())
-	  "this is an Objective Caml reserved word."
+        Error.errorp
+          (Positions.with_poss (lexeme_start_p lexbuf) (lexeme_end_p lexbuf) ())
+          "this is an Objective Caml reserved word."
       else
-	LID (with_pos (cpos lexbuf) id)
+        LID (with_pos (cpos lexbuf) id)
     }
 | (uppercase identchar *) as id
     { UID (with_pos (cpos lexbuf) id) }
@@ -308,14 +308,14 @@ rule main = parse
     { savestart lexbuf (fun lexbuf ->
         let openingpos = lexeme_end_p lexbuf in
         let closingpos, _ = action true openingpos [] lexbuf in
-	(* TEMPORARY if keyword list nonempty, issue an error *)
+        (* TEMPORARY if keyword list nonempty, issue an error *)
         HEADER (mk_stretch false openingpos closingpos [])
       ) }
 | "{"
     { savestart lexbuf (fun lexbuf ->
         let openingpos = lexeme_end_p lexbuf in
         let closingpos, pkeywords = action false openingpos [] lexbuf in
-	let stretch = mk_stretch true openingpos closingpos pkeywords in
+        let stretch = mk_stretch true openingpos closingpos pkeywords in
         ACTION (Action.from_stretch stretch)
       ) }
 (* TEMPORARY comprendre si la différence entre header et action est bien
@@ -371,11 +371,11 @@ and action percent openingpos pkeywords = parse
     { match percent, delimiter with
       | true, "%}"
       | false, "}" ->
-	  (* This is the delimiter we were instructed to look for. *)
-	  lexeme_start_p lexbuf, pkeywords
+          (* This is the delimiter we were instructed to look for. *)
+          lexeme_start_p lexbuf, pkeywords
       | _, _ ->
-	  (* This is not it. *)
-	  error1 openingpos "unbalanced opening brace."
+          (* This is not it. *)
+          error1 openingpos "unbalanced opening brace."
     }
 | '('
     { let _, pkeywords = parentheses (lexeme_end_p lexbuf) pkeywords lexbuf in
@@ -470,7 +470,7 @@ and ocamlcomment openingpos = parse
 (* Skip O'Caml strings. *)
 
 and string openingpos = parse
-| '"' 
+| '"'
    { () }
 | '\\' newline
 | newline
@@ -479,7 +479,7 @@ and string openingpos = parse
    (* Upon finding a backslash, skip the character that follows,
       unless it is a newline. Pretty crude, but should work. *)
    { string openingpos lexbuf }
-| eof 
+| eof
    { error1 openingpos "unterminated Objective Caml string." }
 | _
    { string openingpos lexbuf }
@@ -496,5 +496,5 @@ and char = parse
 | '\\' ['0'-'9'] ['0'-'9'] ['0'-'9'] "'"
 | '\\' 'x' ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F'] "'"
 | ""
-   { () } 
+   { () }
 

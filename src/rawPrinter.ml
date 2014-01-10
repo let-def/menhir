@@ -226,7 +226,7 @@ and typ t =
 (* ------------------------------------------------------------------------- *)
 (* Convert to a tree, then print the tree. *)
 
-let expr e = 
+let expr e =
   print_tree X.f (expr e)
 
 end

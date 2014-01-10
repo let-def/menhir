@@ -20,7 +20,7 @@ module Make (X : sig
 
   val f: out_channel
 
-  (* If [raw_stretch_action] is set, then we print the semantic actions 
+  (* If [raw_stretch_action] is set, then we print the semantic actions
      as they are found into the original source code. *)
   val raw_stretch_action: bool
 

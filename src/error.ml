@@ -87,8 +87,8 @@ let logC =
 let errors =
   ref false
 
-let printN positions message = 
-  List.iter (fun position -> 
+let printN positions message =
+  List.iter (fun position ->
     fprintf stderr "%s:\n" (Positions.string_of_pos position)
   ) positions;
   fprintf stderr "%s\n%!" message

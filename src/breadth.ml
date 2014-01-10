@@ -63,12 +63,12 @@ end) = struct
     G.entry visit;
     Misc.qiter (fun vertex ->
       G.successors (fun label son ->
-	if not (visited son) then begin
-	  visit son;
-	  f true vertex label son
-	end
-	else
-	  f false vertex label son
+        if not (visited son) then begin
+          visit son;
+          f true vertex label son
+        end
+        else
+          f false vertex label son
       ) vertex
     ) queue
 

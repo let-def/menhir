@@ -32,9 +32,9 @@ val token_type_mode: token_type_mode
 type construction_mode =
   | ModeCanonical     (* --canonical: canonical Knuth LR(1) automaton *)
   | ModeInclusionOnly (* --no-pager : states are merged when there is an inclusion
-			              relationship, default reductions are used *)
+                                      relationship, default reductions are used *)
   | ModePager         (* normal mode: states are merged as per Pager's criterion,
-			              default reductions are used *)
+                                      default reductions are used *)
 
 val construction_mode: construction_mode
 

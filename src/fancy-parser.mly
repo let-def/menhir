@@ -32,7 +32,7 @@ open Positions
 
 %token TOKEN TYPE LEFT RIGHT NONASSOC START PREC PUBLIC COLON BAR EOF EQUAL
 %token INLINE LPAREN RPAREN COMMA QUESTION STAR PLUS PARAMETER
-%token <string Positions.located> LID UID 
+%token <string Positions.located> LID UID
 %token <Stretch.t> HEADER
 %token <Stretch.ocamltype> OCAMLTYPE
 %token <string Lazy.t> PERCENTPERCENT
@@ -70,12 +70,12 @@ open Positions
 
 grammar:
   ds = declaration* PERCENTPERCENT rs = rule* t = trailer
-    { 
-      { 
-	pg_filename          = ""; (* filled in by the caller *)
-	pg_declarations      = List.flatten ds;
-	pg_rules	     = List.flatten rs;
-	pg_trailer           = t
+    {
+      {
+        pg_filename          = ""; (* filled in by the caller *)
+        pg_declarations      = List.flatten ds;
+        pg_rules	     = List.flatten rs;
+        pg_trailer           = t
       }
     }
 
@@ -106,9 +106,9 @@ Here are sample valid declarations:
     {
       match t with
       | None ->
-	  List.map (Positions.map (fun nonterminal -> DStart nonterminal)) nts
+          List.map (Positions.map (fun nonterminal -> DStart nonterminal)) nts
       | Some t ->
-	  Misc.mapd (fun ntloc ->
+          Misc.mapd (fun ntloc ->
             Positions.mapd (fun nt -> DStart nt, DType (t, ParameterVar ntloc)) ntloc) nts
     }
 
@@ -179,12 +179,12 @@ Here is a sample valid declaration:
 | rule_specific_token
     {
       if $previouserror >= 3 then
-	Error.signal (Positions.two $startpos $endpos)
-	  "Syntax error inside a declaration.\n\
-	   Did you perhaps forget the %% that separates declarations and rules?";
+        Error.signal (Positions.two $startpos $endpos)
+          "Syntax error inside a declaration.\n\
+           Did you perhaps forget the %% that separates declarations and rules?";
 
       (* Do not attempt to perform error recovery. There is no way of
-	 forcing the automaton into a state where rules are expected. *)
+         forcing the automaton into a state where rules are expected. *)
 
       exit 1
     }
@@ -248,16 +248,16 @@ rule:
   params = plist(symbol)                                    /* formal parameters */
   COLON optional_bar
   prods = separated_nonempty_list(BAR, production_group)    /* productions */
-    { 
+    {
       let public, inline = flags in
       [
         {
-          pr_public_flag = public; 
-          pr_inline_flag = inline; 
-	  pr_nt          = Positions.value symbol;
-	  pr_positions   = [ Positions.position symbol ];
-	  pr_parameters  = List.map Positions.value params;
-	  pr_branches    = List.flatten prods
+          pr_public_flag = public;
+          pr_inline_flag = inline;
+          pr_nt          = Positions.value symbol;
+          pr_positions   = [ Positions.position symbol ];
+          pr_parameters  = List.map Positions.value params;
+          pr_branches    = List.flatten prods
         }
       ]
     }
@@ -292,17 +292,17 @@ production_group:
   productions = separated_nonempty_list(BAR, production)
   action = ACTION
   oprec2 = precedence?
-    { 
+    {
       ParserAux.check_production_group
-	productions
-	$startpos(action) $endpos(action) action;
+        productions
+        $startpos(action) $endpos(action) action;
 
       List.map (fun (producers, oprec1, rprec, pos) -> {
-	pr_producers                = producers;
-	pr_action                   = action;
-	pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
-	pr_branch_reduce_precedence = rprec;
-	pr_branch_position          = pos
+        pr_producers                = producers;
+        pr_action                   = action;
+        pr_branch_shift_precedence  = ParserAux.override pos oprec1 oprec2;
+        pr_branch_reduce_precedence = rprec;
+        pr_branch_position          = pos
       }) productions
     }
 | error ACTION precedence?

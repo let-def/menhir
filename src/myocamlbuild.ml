@@ -41,7 +41,7 @@ let copy_file_from_tag src dst env build =
    [yacc_parser] or [fancy_parser]. *)
 
 let parser_rule () =
-  (* The three dependencies. *)  
+  (* The three dependencies. *)
   flag_and_dep ["origin_parser"; "yacc_parser"]  (P "yacc-parser.mly");
   flag_and_dep ["origin_parser"; "fancy_parser"] (P "fancy-parser.mly");
   dep ["origin_parser"; "fancy_parser"] ["standard.mly"];
