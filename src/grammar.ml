@@ -176,23 +176,49 @@ module Terminal = struct
      Pseudo-tokens (used in %prec declarations, but never
      declared using %token) are filtered out. *)
 
-  let (n : int), (name : string array), (map : int StringMap.t) =
+  let (nt_start : int), (nt_count : int),
+      ((n : int), (name : string array), (map : int StringMap.t)) =
     let tokens =
       StringMap.fold (fun token properties tokens ->
         if properties.tk_is_declared then token :: tokens else tokens
       ) Front.grammar.tokens []
     in
+    let nonterminals =
+      if Settings.feed_nonterminal then
+        let prepend nt acc =
+          CodeBits.ntmangle (Nonterminal.print true nt) :: acc
+        in
+        List.rev (Nonterminal.foldx prepend [])
+      else []
+    in
     match tokens with
     | [] ->
         Error.error [] "no tokens have been declared."
     | _ ->
-        Misc.index ("error" :: tokens @ [ "#" ])
+      List.length ("error" :: tokens), List.length nonterminals,
+      Misc.index ("error" :: tokens @ nonterminals @ [ "#" ])
 
   let print tok =
     name.(tok)
 
   let lookup name =
     StringMap.find name map
+
+  let lookup_nt nt =
+    let nt = nt - Nonterminal.start in
+    if nt >= 0 && nt < nt_count then
+      nt_start + nt
+    else
+      raise Not_found
+
+  let is_nt t =
+    nt_start <= t && t < nt_start + nt_count
+
+  let as_nt t =
+    if is_nt t then
+      Some (t - nt_start + Nonterminal.start)
+    else
+      None
 
   let sharp =
     lookup "#"
@@ -216,10 +242,17 @@ module Terminal = struct
     in
     Array.init n (fun tok ->
       try
-         StringMap.find name.(tok) Front.grammar.tokens
-       with Not_found ->
-         assert (tok = sharp || tok = error);
-         not_so_dummy_properties
+        StringMap.find name.(tok) Front.grammar.tokens
+      with Not_found ->
+      match as_nt tok with
+      | Some nt ->
+        { not_so_dummy_properties with
+          tk_priority = ParserAux.current_reduce_precedence ();
+          tk_associativity = NonAssoc;
+          tk_ocamltype = Nonterminal.ocamltype nt }
+      | None ->
+        assert (tok = sharp || tok = error);
+        not_so_dummy_properties
     )
 
   let () =
@@ -422,6 +455,8 @@ module Production = struct
     ) Front.grammar.rules 0 in
     Error.logG 1 (fun f -> Printf.fprintf f "Grammar has %d productions.\n" n);
     n + StringSet.cardinal Front.grammar.start_symbols
+      + (if not Settings.feed_nonterminal then 0
+         else StringMap.cardinal Front.grammar.rules)
 
   let p2i prod =
     prod
@@ -468,6 +503,26 @@ module Production = struct
   let reduce_precedence : precedence_level array =
     Array.make n UndefinedPrecedence
 
+  let prod_of_nonterminal_action =
+    Action.from_stretch {
+      stretch_filename    = "generated code";
+      stretch_linenum     = 1;
+      stretch_linecount   = 1;
+      stretch_raw_content = " v ";
+      stretch_content     = " v ";
+      stretch_keywords    = [];
+    }
+
+  let prod_of_nonterminal nt k =
+    table.(k) <- (nt, [| Symbol.T (Terminal.lookup_nt nt) |]);
+    identifiers.(k) <- [|"v"|];
+    used.(k) <- [|true|];
+    actions.(k) <- Some prod_of_nonterminal_action;
+    reduce_precedence.(k) <- ParserAux.current_reduce_precedence ();
+    prec_decl.(k) <- None;
+    positions.(k) <- [ Positions.dummy ];
+    k+1
+
   let (_ : int) = StringMap.fold (fun nonterminal { branches = branches } k ->
     let nt = Nonterminal.lookup nonterminal in
     let k' = List.fold_left (fun k branch ->
@@ -504,6 +559,10 @@ module Production = struct
       positions.(k) <- [ branch.branch_position ];
       k+1
     ) k branches in
+    let k' = if Settings.feed_nonterminal && not (Nonterminal.is_start nt)
+             then prod_of_nonterminal nt k'
+             else k'
+    in
     ntprods.(nt) <- (k, k');
     k'
   ) Front.grammar.rules start

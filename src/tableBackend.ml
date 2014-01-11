@@ -63,17 +63,14 @@ let fnext =
 let fstack =
   field "stack"
 
+let ftoken =
+  field "token"
+
 let fcurrent =
   field "current"
 
-let flexbuf =
-  field "lexbuf"
-
 let fpreviouserror =
   field "previouserror"
-
-let flex_start_p =
-  "Lexing.lex_start_p"
 
 let interpreter =
   "MenhirInterpreter"
@@ -145,20 +142,25 @@ let reducecellcasts prod i symbol casts =
       else
         (* Project: [let id = (match id with Nonterminal (NT'... id) -> id
                                            | _ -> assert false)] *)
-        let kind, cstr = match symbol with
+        let kind, cstr, has_value = match symbol with
+          | Symbol.T t when Terminal.is_nt t -> "Nonterminal",
+                          Terminal.print t, true
           | Symbol.T t -> "Terminal",
-                          Terminal.print t
+                          Terminal.print t, (Terminal.ocamltype t <> None)
           | Symbol.N n -> "Nonterminal",
-                          "NT'" ^ Misc.normalize (Nonterminal.print true n)
+                          ntmangle (Nonterminal.print true n), true
         in
-        (
-          PVar id,
-          EMatch (EVar id, [
-            { branchpat = PData (kind, [PData (cstr, [PVar id])]);
-              branchbody = EVar id};
-            { branchpat = PWildcard;
-              branchbody = EApp (EVar "assert", [EVar "false"]) };
-          ])
+        (if has_value then
+          (
+            PVar id,
+            EMatch (EVar id, [
+              { branchpat = PData (kind, [PData (cstr, [PVar id])]);
+                branchbody = EVar id};
+              { branchpat = PWildcard;
+                branchbody = EApp (EVar "assert", [EVar "false"]) };
+            ])
+          )
+         else (PVar id, EUnit)
         ) :: casts
     end
   else
@@ -196,7 +198,9 @@ let reducebody prod =
       if length > 0 then
         EVar (Printf.sprintf "_startpos_%s_" ids.(0))
       else
-        ERecordAccess(ERecordAccess (EVar env, flexbuf), flex_start_p)
+        ELet ([(PTuple [PVar "startpos"; PWildcard; PWildcard],
+                ERecordAccess (EVar env, ftoken))],
+              EVar "startpos")
     ) ::
     ( PVar endp,
       if length > 0 then
@@ -216,7 +220,7 @@ let reducebody prod =
       EComment (
         sprintf "Accepting %s" (Nonterminal.print false nt),
         blet (
-            [ pat, EVar stack ],
+          [ pat, EVar stack ],
           ERaise (EData (accept, [ EVar ids.(0) ]))
         )
       )
@@ -233,10 +237,10 @@ let reducebody prod =
       in
       let packed_semv =
         if not Settings.typed_values
-         then ERepr (EVar semv)
+        then ERepr (EVar semv)
         else
           let cstr =
-            "NT'" ^ Misc.normalize (Nonterminal.print true (Production.nt prod))
+            ntmangle (Nonterminal.print true (Production.nt prod))
           in
           EData ("Nonterminal", [EData (cstr, [EVar semv])])
       in
@@ -652,15 +656,37 @@ let trace =
    its semantic value, respectively. *)
 
 let token2terminal =
-  destructuretokendef
-    "token2terminal"
-    tint
-    false
-    (fun tok -> EIntConst (Terminal.t2i tok))
+  let body tok = EIntConst (Terminal.t2i tok) in
+  if Settings.feed_nonterminal then
+    let pattern elt =
+      let kind =
+        if Terminal.is_nt elt then
+          "Nonterminal"
+        else
+          "Terminal"
+      in
+      Some (PData (kind, [tokpat elt]))
+    in
+    let cases =
+      { branchpat = PData ("Bottom", []);
+        branchbody = EVar "error_terminal";
+      } ::
+      branchonterminal pattern body
+    in
+    {
+      valpublic = true;
+      valpat = PVar "token2terminal";
+      valval = EFun ([PVar "x"], EMatch (EVar "x", cases))
+    }
+  else
+    destructuretokendef
+      "token2terminal"
+      tint
+      false
+      body
 
 let token2value =
-  if not Settings.typed_values
-  then
+  if not Settings.typed_values then
     destructuretokendef
       "token2value"
       tobj
@@ -674,6 +700,12 @@ let token2value =
               EVar semv
         )
       )
+  else if Settings.feed_nonterminal then
+    {
+      valpublic = true;
+      valpat = PVar "token2value";
+      valval = EFun ([PVar "x"], EVar "x")
+    }
   else
     {
       valpublic = true;
@@ -744,7 +776,8 @@ let semtypedef =
 let tokendef2 = {
   typename = "token"; (* not [TokenType.tctoken], as it might carry an undesired prefix *)
   typeparams = [];
-  typerhs = TAbbrev (TypApp (jeton, []));
+  typerhs = TAbbrev (TypApp ((if Settings.feed_nonterminal
+                              then "semantic_value" else jeton), []));
   typeconstraint = None;
   typeprivate = false;
 }
@@ -773,9 +806,9 @@ let application = {
           tokendef2;
         ];
         struct_nonrecvaldefs = [
-          token2terminal;
           define ("error_terminal", EIntConst (Terminal.t2i Terminal.error));
           define ("error_value", error_value);
+          token2terminal;
           token2value;
           default_reduction;
           error;
@@ -822,7 +855,7 @@ let api : IL.valdef list =
       if Settings.typed_values
       then
         let kind, cstr =
-          "Nonterminal", "NT'" ^ Misc.normalize (Nonterminal.print true nt)
+          "Nonterminal", ntmangle (Nonterminal.print true nt)
         in
         EMatch (v, [
           { branchpat = PData (kind, [PData (cstr, [PVar "result"])]);
@@ -833,18 +866,27 @@ let api : IL.valdef list =
       else
         EAnnot (EMagic v, type2scheme t)
     in
-
+    let rebind_lexer v =
+      if not Settings.feed_nonterminal then v
+      else
+        ELet ([PVar "lexer",
+                EFun ([PVar "buf"],
+                  EData ("Terminal", [EApp (EVar "lexer", [EVar "buf"])]))],
+              v)
+    in
     define (
       Nonterminal.print true nt,
       EFun (
         [ PVar lexer; PVar lexbuf ],
-        project (
-          EApp (
-            EVar entry, [
-              EIntConst (Lr1.number state);
-              EVar lexer;
-              EVar lexbuf
-            ]
+        rebind_lexer (
+          project (
+            EApp (
+              EVar entry, [
+                EIntConst (Lr1.number state);
+                EVar lexer;
+                EVar lexbuf
+              ]
+            )
           )
         )
       )
@@ -886,8 +928,12 @@ let program = {
     api;
 
   postlogue =
+    let tokenkind = if Settings.feed_nonterminal
+      then "MenhirInterpreter.semantic_value"
+      else jeton
+    in
     [ "include (MenhirInterpreter : MenhirLib.EngineTypes.STEP_ENGINE\n\
-        \twith type token := token\n\
+        \twith type token := " ^ tokenkind ^ "\n\
         \tand type state = int\n\
         \tand type semantic_value := MenhirInterpreter.semantic_value)" ] @
     Front.grammar.UnparameterizedSyntax.postludes
