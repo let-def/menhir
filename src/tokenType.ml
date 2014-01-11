@@ -87,7 +87,8 @@ let tokentypedef, tokenprefix =
         paramdecls = PreFront.grammar.parameters;
         excdecls = [];
         typedecls = [ tokentypedef ];
-        valdecls = []
+        valdecls = [];
+        moddecls = [];
       };
       let module P =
         Printer.Make (struct

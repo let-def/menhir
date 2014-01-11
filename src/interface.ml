@@ -59,8 +59,10 @@ let interface = {
   valdecls =
     StringSet.fold (fun symbol decls ->
       (Misc.normalize symbol, entrytypescheme symbol) :: decls
-    ) PreFront.grammar.start_symbols []
+    ) PreFront.grammar.start_symbols [];
 
+  moddecls =
+    [];
 }
 
 (* Writing the interface to a file. *)

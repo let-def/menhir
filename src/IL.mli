@@ -60,7 +60,10 @@ and interface = {
     typedecls: typedef list;
 
     (* Value declarations. *)
-    valdecls: (string * typescheme) list
+    valdecls: (string * typescheme) list;
+
+    (* Module declarations. *)
+    moddecls: (string * interface) list;
 
   }
 
