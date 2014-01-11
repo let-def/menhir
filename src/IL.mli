@@ -72,10 +72,14 @@ and excdef = {
     (* Name of the exception. *)
     excname: string;
 
-    (* Optional equality. *)
-    exceq: string option;
+    (* Exception explicit definition or rebind. *)
+    excrhs: excrhs;
 
   }
+
+and excrhs =
+  | ExcDecl of typ list
+  | ExcRebind of string
 
 and typedef = {
 

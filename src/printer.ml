@@ -603,11 +603,12 @@ let directives =
   pdefs directive nothing nothing
 
 let excdef in_intf f def =
-  match in_intf, def.exceq with
-  | _, None
-  | true, Some _ ->
+  match in_intf, def.excrhs with
+  | _, ExcDecl params ->
+      fprintf f "%s%a%t%t" def.excname datavalparams params nl nl
+  | true, ExcRebind _ ->
       fprintf f "%s%t%t" def.excname nl nl
-  | false, Some s ->
+  | false, ExcRebind s ->
       fprintf f "%s = %s%t%t" def.excname s nl nl
 
 let excdefs in_intf =
