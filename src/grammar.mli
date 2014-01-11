@@ -110,7 +110,15 @@ module Terminal : sig
 
   (* [lookup] maps an identifier to a terminal, or raises [Not_found]. *)
 
-  val lookup : string -> t
+  val lookup: string -> t
+
+  (* [lookup_nt] maps a non-terminal to the special terminal representing it,
+     in case Settings.feed_nonterminal is set, or raises [Not_found]. *)
+
+  val lookup_nt: Nonterminal.t -> t
+
+  (* [is_nt t] returns true iff [t] is terminal generated after a non-terminal. *)
+  val is_nt : t -> bool
 
   (* Terminals can be converted to integers. This feature is exploited
      in the table-based back-end. *)
