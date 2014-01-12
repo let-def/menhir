@@ -30,12 +30,18 @@ module Make (T : TABLE) = struct
   let _eRR : exn =
     Error
 
-
   (* --------------------------------------------------------------------------- *)
 
-  (* Alias to [EngineTypes.env] specialized to current definitions. *)
+  type feed = [ `Feed | `Feed_error ]
+  type step = [ `Step_run | `Step_error | `Step_action ]
 
-  type env' = (state, semantic_value, token) env
+  type 'a parser = { env: (state, semantic_value, token) env; tag: 'a }
+
+  type result =
+    [ `Step   of step parser
+    | `Feed   of feed parser
+    | `Accept of semantic_value
+    | `Reject ]
 
   (* --------------------------------------------------------------------------- *)
 
@@ -44,7 +50,7 @@ module Make (T : TABLE) = struct
      previous token. If [env.shifted] has not yet reached its limit,
      it is incremented. *)
 
-  let discard env : env' =
+  let discard env : (state, semantic_value, token) env =
     let lexbuf = env.lexbuf in
     let token = env.lexer lexbuf in
     Log.lookahead_token lexbuf (T.token2terminal token);
@@ -81,23 +87,12 @@ module Make (T : TABLE) = struct
      Here, the code is structured in a slightly different way. It is up to
      the caller of [run] to indicate whether to discard a token. *)
 
-  let rec run env please_discard : env' =
+  let rec run env : result =
 
     (* Log the fact that we just entered this state. *)
 
     let s = env.current in
     Log.state s;
-
-    (* If [please_discard] is set, discard a token and fetch the next one. *)
-
-    (* This flag is set when [s] is being entered by shifting a terminal
-       symbol and [s] does not have a default reduction on [#]. *)
-
-    let env =
-      if please_discard
-      then discard env
-      else env
-    in
 
     (* Examine what situation we are in. This case analysis is analogous to
        that performed in [CodeBackend.gettoken], in the sub-case where we do
@@ -109,7 +104,7 @@ module Make (T : TABLE) = struct
       continue (* there is none; continue below *)
       env
 
-  and continue env : env' =
+  and continue env : result =
 
     (* There is no default reduction. Consult the current lookahead token
        so as to determine which action should be taken. *)
@@ -124,7 +119,7 @@ module Make (T : TABLE) = struct
 
     if env.shifted = (-1) then begin
       Log.resuming_error_handling();
-      error env
+      `Step { env; tag = `Step_error }
     end
     else
       action env
@@ -135,7 +130,7 @@ module Make (T : TABLE) = struct
      a default reduction. We also know that the current lookahead token is
      not [error]: it is a real token, stored in [env.token]. *)
 
-  and action env : env' =
+  and action env : result =
 
     (* We consult the two-dimensional action table, indexed by the
        current state and the current lookahead token, in order to
@@ -162,7 +157,7 @@ module Make (T : TABLE) = struct
       (terminal : terminal)
       (value : semantic_value)
       (s' : state)
-      : env' =
+      : result =
 
     (* Log the transition. *)
 
@@ -185,13 +180,15 @@ module Make (T : TABLE) = struct
         current = s';
       }
     in
-    run env please_discard
+    if please_discard
+    then `Feed { env; tag = `Feed }
+    else `Step { env; tag = `Step_run }
 
   (* --------------------------------------------------------------------------- *)
 
   (* This function takes care of reductions. *)
 
-  and reduce env (prod : production) : env' =
+  and reduce env (prod : production) : result =
 
     (* Log a reduction event. *)
 
@@ -223,7 +220,7 @@ module Make (T : TABLE) = struct
          production [prod]. *)
 
       let current = T.goto env.stack.state prod in
-      run { env with current } false
+      `Step { env = { env with current }; tag = `Step_run }
 
     end
     else
@@ -237,12 +234,11 @@ module Make (T : TABLE) = struct
   (* [initiate] and [errorbookkeeping] initiate error handling. See the functions
      by the same names in [CodeBackend]. *)
 
-  and initiate env : env' =
+  and initiate env : result =
     assert (env.shifted >= 0);
     if T.recovery && env.shifted = 0 then begin
       Log.discarding_last_token (T.token2terminal env.token);
-      let env = { (discard env) with shifted = 0 } in
-      action env
+      `Feed { env; tag = `Feed_error }
     end
     else
       errorbookkeeping env
@@ -250,11 +246,11 @@ module Make (T : TABLE) = struct
   and errorbookkeeping env =
     Log.initiating_error_handling();
     let env = { env with previouserror = env.shifted; shifted = -1 } in
-    error env
+    `Step { env; tag = `Step_error }
 
   (* [error] handles errors. *)
 
-  and error env : env' =
+  and error env : result =
 
     (* Consult the column associated with the [error] pseudo-token in the
        action table. *)
@@ -297,7 +293,7 @@ module Make (T : TABLE) = struct
 
       (* The stack is empty. Die. *)
 
-      raise _eRR
+      `Reject
 
     else begin
 
@@ -308,6 +304,27 @@ module Make (T : TABLE) = struct
       error env
 
     end
+
+  (* --------------------------------------------------------------------------- *)
+
+  (* Step-by-step execution interface *)
+
+  let step s =
+    try
+      match s.tag with
+      | `Step_run    -> run s.env
+      | `Step_action -> action s.env
+      | `Step_error  -> error s.env
+    with
+    | T.Accept v -> `Accept v
+    | Error      -> `Reject
+
+  let feed s =
+    match s.tag with
+    | `Feed ->
+      { env = discard s.env; tag = `Step_run }
+    | `Feed_error ->
+      { env = { (discard s.env) with shifted = 0 }; tag = `Step_action }
 
   (* --------------------------------------------------------------------------- *)
 
@@ -358,11 +375,17 @@ module Make (T : TABLE) = struct
       (* If ocaml offered a [match/with] construct with zero branches, this is
          what we would use here, since the type [void] has zero cases. *)
 
-      let (_ : env') = run env false in
-      assert false (* cannot fail *)
+      let rec aux : result -> semantic_value = function
+        | `Step p -> aux (step p)
+        | `Accept v -> v
+        | `Reject -> raise _eRR
+        | `Feed p ->
+          aux (step (feed p))
+      in
+      aux (run env)
 
     with
-    | Accept v ->
+    | T.Accept v ->
         v
 
 end
